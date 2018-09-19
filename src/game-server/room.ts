@@ -12,6 +12,8 @@ function sendMsg(player, type, content) {
 	player.ws.send(JSON.stringify(ret));
 }
 
+export sendMsg;
+
 function broadcast(room, type, content) {
 	let ret = {
 		type : type,
@@ -24,6 +26,8 @@ function broadcast(room, type, content) {
 		x.ws.send(msg);
 	});
 }
+
+export broadcast;
 
 export function getPlayers(room) {
 	let players = room.players.map(x => {

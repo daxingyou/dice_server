@@ -1,5 +1,8 @@
 'use strict';
 
+import dao from '../dao';
+import * as mroom from './room';
+
 const MAX_RECORDS = 20;
 
 enum RoomStage {
@@ -57,14 +60,37 @@ function enter_open(room) {
 	/* 2. 计算结果 */
 	settle(room);
 
-	/* 4. 广播结果  */
+	/* 3. 广播结果  */
+	let banker = room.banker;
+	let content = {
+		round : room.round,
+		dices : room.dices,
+		records : room.records,
+		result : room.result,
+		banker : {
+			balance : banker.balance,
+			profit : banker.profit
+		}
+	};
+
+	let players = room.players;
+	players.forEach(p => {
+		let self = {
+			balance : p.balance,
+			profit : p.profit
+		};
+
+		content.self = self;
+
+		mroom.sendMsg(p, 'room_result_push', content);
+	});
 }
 
 function leave_open(room) {
 	// 离开开牌阶段
 
 	/* 1. 清空玩家下注信息 */
-
+	
 
 	/* 2. 更新Round信息 */
 	room.round++;
@@ -145,6 +171,7 @@ function settle(room) {
 
 	let bets = room.bets;
 	let scores = {};
+	let banker_sc = 0;
 
 	bets.forEach(x => {
 		if (scores[x.uid] == null)
@@ -158,6 +185,7 @@ function settle(room) {
 			sc -= x.amount;
 
 		scores[x.uid] += sc;
+		banker_sc -= sc;
 	});
 
 	let players = room.players;
@@ -166,8 +194,28 @@ function settle(room) {
 		let uid = x.uid;
 		let sc = scores[uid];
 
-		if (sc != null)
+		x.profit = 0;
+
+		if (sc != null) {
 			x.balance += sc;
+			x.profit = sc;
+		}
+	});
+
+	let banker = room.banker;
+
+	banker.profit = banker_sc;
+	banker.balance += banker_sc;
+
+	let sequelize = dao['sequelize'];
+	let UserDao = dao['UserDao'];
+	let works = [];
+
+	for (let uid in scores)
+		works.push({ uid : uid, score : scores[uid] });
+
+	sequelize.Promise.each(works, wk => {
+		return UserDao.add_money(wk.uid, wk.score);
 	});
 }
 

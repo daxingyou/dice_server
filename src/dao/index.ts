@@ -1,6 +1,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import sequelize from '../dao/dao';
 
 let dao:any = {};
 
@@ -14,6 +15,8 @@ fs.readdirSync(__dirname)
 
 	dao[base] = content;
 });
+
+dao['sequelize'] = sequelize;
 
 export default dao;
 
