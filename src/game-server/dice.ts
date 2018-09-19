@@ -18,33 +18,44 @@ enum RoomTimeout {
 	ROOM_TIMEOUT_OPEN = 7
 }
 
-export function calculateResult(room) {
-    // calculate player score
-    // TODO
-    
-
-    // reset player bets
-    // TODO
-}
-
-export function nextRound(room) {
-	room.round++;
-
-	shuffle(room);
-
-	resetExpired(room, room.interval);
-}
+const STAGES = [ 'rob', 'bet', 'open' ];
 
 function enter_rob(room) {
 	// 进入抢庄阶段
+
+    /* 1. 清空抢庄信息 */
+    room.robs = [];
+
+    let content = {
+        stage : 'rob',
+        round : room.round,
+        expire : room.expired
+    };
+
+    mroom.broadcast(room, 'game_stage_push', content);
 }
 
 function leave_rob(room) {
 	// 离开抢庄阶段
+
+    let content = {
+        banker : room.banker
+    };
+
+    room.robs = [];
+
+    mroom.broadcast(room, 'game_banker_push', content);
 }
 
 function enter_bet(room) {
 	// 开始下注阶段
+
+    let content = {
+        stage : 'bet',
+        expire : room.expired
+    }
+    
+    mroom.broadcast(room, 'game_stage_push', content);
 }
 
 function leave_bet(room) {
@@ -63,6 +74,7 @@ function enter_open(room) {
 	/* 3. 广播结果  */
 	let banker = room.banker;
 	let content = {
+        stage : 'open',
 		round : room.round,
 		dices : room.dices,
 		records : room.records,
@@ -73,8 +85,7 @@ function enter_open(room) {
 		}
 	};
 
-	let players = room.players;
-	players.forEach(p => {
+	room.players.forEach(p => {
 		let self = {
 			balance : p.balance,
 			profit : p.profit
@@ -82,7 +93,7 @@ function enter_open(room) {
 
 		content.self = self;
 
-		mroom.sendMsg(p, 'room_result_push', content);
+		mroom.sendMsg(p, 'game_stage_push', content);
 	});
 }
 
@@ -90,7 +101,9 @@ function leave_open(room) {
 	// 离开开牌阶段
 
 	/* 1. 清空玩家下注信息 */
-	
+	room.bets = [];
+    room.robot_bets = [];
+    room.result = '';
 
 	/* 2. 更新Round信息 */
 	room.round++;
@@ -235,6 +248,22 @@ function resetExpired(room, timeout) {
 	room.expired = Math.floor(Date.now() / 1000) + timeout;
 }
 
+function getRoomDetail(room) {
+    return {
+        id : room.id,
+        name : room.name,
+        stage : STAGES[room.stage],
+        expire : room.expired,
+        round : room.round,
+        dices : room.dices,
+        result : room.result,
+        records : room.records,
+        robots : room.robots,
+        stat : room.stat,
+        banker : room.banker
+    };
+}
+
 export function createRoom(roominfo) {
     let room = {
         id: roominfo.room_id,     	// 桌子ID
@@ -246,7 +275,7 @@ export function createRoom(roominfo) {
         result: '',      			// 当期胜负, R: 大, G: 豹子, B: 小; 如 R12, G6, B4
         records: [],     			// 所有的 result
         players: [],      			// 玩家列表
-		robot : [],
+		robots : [],
 		bets : [],					// 真实玩家下注: { uid : uid, bet : 'small', amount : amount }
 		robot_bets : [],			// 机器人下注
 		stat : {
@@ -290,11 +319,69 @@ export function tick(room) {
 	room.stage = stage;
 
 	let nw = listStage[stage];
+
+	resetExpired(room, nw.timeout);
+
 	let enter = nw.enter;
 	if (enter)
 		enter(room);
-
-	resetExpired(room, nw.timeout);
 }
+
+export function playerBet(room, player, bet) {
+    let stage = room.stage;
+
+    if (stage != 'bet')
+        return;
+
+    room.bets.push(bet);
+
+    let content = {
+        bet : bet
+    };
+
+    mroom.sendMsg(player, 'player_bet_push', content);
+}
+
+export function enterRoom(room, player) {
+    let id = player.id;
+
+    let found = false;
+    let players = room.players;
+    for (let i = 0; i < players.length; i++) {
+        let p = players[i];
+
+        if (p.id == id) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+        players.push(player);
+
+    let content = getRoomDetail(room);
+
+    mroom.sendMsg(player, 'enter_room_re', content);
+}
+
+export function leaveRoom(room, player) {
+    let id = player.id;
+
+    let off = -1;
+    let players = room.players;
+    for (let i = 0; i < players.length; i++) {
+        let p = players[i];
+
+        if (p.id == id) {
+            off = i;
+            break;
+        }
+    }
+   
+    if (off >= 0)
+        room.splice(off, 1);
+}
+
+
 
 

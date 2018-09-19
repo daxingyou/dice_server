@@ -12,36 +12,43 @@ console.log('Listen on ws 4001');
 
 let handler = {};
 
-handler['entry'] = function(content, ws) {
-	// 1. 取出token，并验证
-
-	// 2. 得到uid, 获得玩家信息，绑定到ws
-};
-
 handler['enter_room'] = function(content, ws) {
-/*
-            return store.get_player_by_token(params.token)
-            .then( item => {
-                if (!item) return ;
-                let desk_id = params.room_id;
-                ws.account = item.account
-                g_players[item.account] = {
-                    ws: ws, 
-                    desk_id: desk_id, 
-                    id: item.id, 
-                    account: item.account, 
-                    avatar: 'http://wx.qlogo.cn/mmopen/dWYcndbpDnYz1901s7WJ7dMrKtGo3eodSaZHicTTRqt1cMzwiakrcPNXRU4dRdicHZCTcTLxBrfSHEJdib8uE8Pic9MqGpjwuZPBW/0',
-                    bets: []
-                };
-                mdesk.joinDesk(g_desks[desk_id], g_players[account]);
-            })
-            .catch(err => {
-                console.log(err);
-            });
-*/
+    return dao['UserDao'].get_player_by_token(content.token)
+    .then(p => {
+        if (!p)
+            return true;
+
+        let room_id = 1;
+
+        let player = {
+            id : p.id,
+            account : p.account,
+            avatar : p.avatar,
+            room_id : room_id,
+            ws : ws
+        };
+
+        g_players[p.id] = player;
+        ws.uid = p.id;
+
+        let room = g_rooms[room_id];
+
+        if (room)
+            mroom.enterRoom(room, player);
+    })
+    .catch(err => {
+        console.log('enter_room err: ' + err);
+    });
 };
 
 handler['player_bet'] = function(content, ws) {
+    let uid = ws.uid;
+    let player = g_players[uid];
+
+    if (!player)
+        return;
+
+    let room = g_rooms[player.room_i
 /*
 	mdesk.playerBet(g_players[ws.account], params);
 */
