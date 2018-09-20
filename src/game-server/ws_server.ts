@@ -1,6 +1,14 @@
 
-let g_rooms = {};
-let g_players = {};
+interface Player {
+	id : number;
+	account : string;
+	avatar : number;
+	room_id : number;
+	ws : any;
+}
+
+let g_rooms : { [key : number] : any } = {};
+let g_players : { [key : number] : Player } = {};
 
 import * as mroom from './room';
 import dao from '../dao';
@@ -10,11 +18,15 @@ const wss = new WebSocket.Server({ port: 4001 });
 
 console.log('Listen on ws 4001');
 
-let handler = {};
+let handler : any = {};
 
-handler['enter_room'] = function(content, ws) {
+interface EnterRoomContent {
+	token : string;
+}
+
+handler['enter_room'] = function(content : EnterRoomContent, ws : any) {
     return dao['UserDao'].get_player_by_token(content.token)
-    .then(p => {
+    .then((p :any) => {
         if (!p)
             return true;
 
@@ -36,42 +48,52 @@ handler['enter_room'] = function(content, ws) {
         if (room)
             mroom.enterRoom(room, player);
     })
-    .catch(err => {
+    .catch((err : any)=> {
         console.log('enter_room err: ' + err);
     });
 };
 
-handler['player_bet'] = function(content, ws) {
+interface PlayerBetContent {
+	bet : any;
+}
+
+handler['player_bet'] = function(content : PlayerBetContent, ws : any) {
     let uid = ws.uid;
     let player = g_players[uid];
 
     if (!player)
         return;
 
-    let room = g_rooms[player.room_i
-/*
-	mdesk.playerBet(g_players[ws.account], params);
-*/
+	let room_id = player.room_id;
+    let room = g_rooms[room_id];
+
+	if (room)
+		mroom.playerBet(room, player, content.bet);
 };
 
-handler['player_rob'] = function(content, ws) {
-
+handler['player_rob'] = function(content : any, ws : any) {
+	// TODO
 }
 
 handler['sync_clock'] = function() {
-/*
-	mdesk.syncClock(g_desks[params.table_id], g_players[ws.account]);
-*/
+	// TODO
 };
 
-function userLeave(ws) {
-/*
-        let account = ws.account;
-        if (!account) return;
-        let player = g_players[account];
-        delete g_players[account];
-        mdesk.leaveDesk(g_desks[player.desk_id], player);
-*/
+function userLeave(ws : any) {
+	let uid = ws.uid;
+	if (!uid)
+		return;
+
+	let player = g_players[uid];
+	if (!player)
+		return;
+
+	delete g_players[uid];
+
+	let room = g_rooms[player.room_id];
+
+	if (room)
+		mroom.leaveRoom(room, player);
 }
 
 wss.on('connection', (ws: WebSocket) => {
@@ -97,15 +119,15 @@ wss.on('connection', (ws: WebSocket) => {
 
 function loadDeskFromDB() {
 	return dao['RoomDao'].list_rooms(true)
-    .then(rooms => {
-		rooms.forEach(rm => {
+    .then((rooms : any) => {
+		rooms.forEach((rm : any) => {
 			let room = mroom.createRoom(rm);
 
 			if (room)
 				g_rooms[rm.id] = room;
 		});
     })
-    .catch(err => {
+    .catch((err : any) => {
         console.log(err);
     });
 }

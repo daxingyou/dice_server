@@ -1,7 +1,7 @@
 'use strict';
 
-import dao from '../dao';
-import * as mroom from './room';
+import dao from '../../dao';
+import * as mroom from '../room';
 
 const MAX_RECORDS = 20;
 
@@ -20,7 +20,55 @@ enum RoomTimeout {
 
 const STAGES = [ 'rob', 'bet', 'open' ];
 
-function enter_rob(room) {
+interface Player {
+	id : number;
+	account : string;
+	name : string;
+	balance : number;
+	avatar : number;
+	profit : number;
+	is_robot : boolean;
+}
+
+interface Bet {
+	uid : number;
+	bet : string;
+	amount : number;
+}
+
+interface Rob {
+	uid : number;
+	amount : number;
+}
+
+interface Stat {
+	triple : number;
+	big : number;
+	small : number;
+	big_bet_total : number;
+	small_bet_total : number;
+}
+
+interface Room {
+	id : number;
+	name : string;
+	config : string;
+	expire : number;
+	round : number;
+	dices : number[];
+	result : string;
+	records : string[];
+	players : Player[];
+	robots : Player[];
+	bets : Bet[];
+	robot_bets : Bet[];
+	stat : Stat;
+	stage : RoomStage;
+	robs : Rob[];
+	banker ?: Player;
+}
+
+function enter_rob(room : Room) {
 	// 进入抢庄阶段
 
     /* 1. 清空抢庄信息 */
@@ -29,13 +77,13 @@ function enter_rob(room) {
     let content = {
         stage : 'rob',
         round : room.round,
-        expire : room.expired
+        expire : room.expire
     };
 
     mroom.broadcast(room, 'game_stage_push', content);
 }
 
-function leave_rob(room) {
+function leave_rob(room : Room) {
 	// 离开抢庄阶段
 
     let content = {
@@ -47,22 +95,22 @@ function leave_rob(room) {
     mroom.broadcast(room, 'game_banker_push', content);
 }
 
-function enter_bet(room) {
+function enter_bet(room : Room) {
 	// 开始下注阶段
 
     let content = {
         stage : 'bet',
-        expire : room.expired
+        expire : room.expire
     }
     
     mroom.broadcast(room, 'game_stage_push', content);
 }
 
-function leave_bet(room) {
+function leave_bet(room : Room) {
 	// 离开下注阶段
 }
 
-function enter_open(room) {
+function enter_open(room : Room) {
 	// 进入开牌阶段
 
 	/* 1. 摇骰子 */
@@ -73,19 +121,19 @@ function enter_open(room) {
 
 	/* 3. 广播结果  */
 	let banker = room.banker;
-	let content = {
+	let content : any = {
         stage : 'open',
 		round : room.round,
 		dices : room.dices,
 		records : room.records,
 		result : room.result,
 		banker : {
-			balance : banker.balance,
-			profit : banker.profit
+			balance : banker ? banker.balance : 0,
+			profit : banker ? banker.profit : 0
 		}
 	};
 
-	room.players.forEach(p => {
+	room.players.forEach((p : Player) => {
 		let self = {
 			balance : p.balance,
 			profit : p.profit
@@ -97,7 +145,7 @@ function enter_open(room) {
 	});
 }
 
-function leave_open(room) {
+function leave_open(room : Room) {
 	// 离开开牌阶段
 
 	/* 1. 清空玩家下注信息 */
@@ -109,28 +157,35 @@ function leave_open(room) {
 	room.round++;
 }
 
-let listStage = [
+interface ListStage {
+	stage : RoomStage;
+	timeout : RoomTimeout;
+	enter : (room : Room) => void;
+	leave : (room : Room) => void;
+}
+
+let listStage : ListStage[] = [
 	{
 		stage : RoomStage.ROOM_STAGE_ROB,
-		timeout : ROOM_TIMEOUT_ROB,
+		timeout : RoomTimeout.ROOM_TIMEOUT_ROB,
 		enter : enter_rob,
 		leave : leave_rob
 	},
 	{
 		stage : RoomStage.ROOM_STAGE_BET,
-		timeout : ROOM_TIMEOUT_BET,
+		timeout : RoomTimeout.ROOM_TIMEOUT_BET,
 		enter : enter_bet,
 		leave : leave_bet
 	},
 	{
 		stage : RoomStage.ROOM_STAGE_OPEN,
-		timeout : ROOM_TIMEOUT_OPEN,
+		timeout : RoomTimeout.ROOM_TIMEOUT_OPEN,
 		enter : enter_open,
 		leave : leave_open
 	}
 ];
 
-function shuffle(room) {
+function shuffle(room : Room) {
 	let dices = [];
 	let p = Math.floor(Math.random() * 10000);
 	dices.push(p % 6 + 1);
@@ -144,14 +199,14 @@ function shuffle(room) {
 	room.dices = dices;
 }
 
-function settle(room) {
+function settle(room : Room) {
 	let dices = room.dices;
 	let stat = room.stat;
 
 	let flag = '';
 	let count = 0;
 
-	dices.forEach(x => {
+	dices.forEach((x : number) => {
 		count += x;
 	});
 
@@ -183,10 +238,10 @@ function settle(room) {
 	room.result = result;
 
 	let bets = room.bets;
-	let scores = {};
+	let scores : any = {};
 	let banker_sc = 0;
 
-	bets.forEach(x => {
+	bets.forEach((x : Bet) => {
 		if (scores[x.uid] == null)
 			scores[x.uid] = 0;
 
@@ -203,8 +258,8 @@ function settle(room) {
 
 	let players = room.players;
 
-	players.forEach(x => {
-		let uid = x.uid;
+	players.forEach((x : Player) => {
+		let uid = x.id;
 		let sc = scores[uid];
 
 		x.profit = 0;
@@ -216,9 +271,10 @@ function settle(room) {
 	});
 
 	let banker = room.banker;
-
-	banker.profit = banker_sc;
-	banker.balance += banker_sc;
+	if (banker) {
+		banker.profit = banker_sc;
+		banker.balance += banker_sc;
+	}
 
 	let sequelize = dao['sequelize'];
 	let UserDao = dao['UserDao'];
@@ -227,33 +283,36 @@ function settle(room) {
 	for (let uid in scores)
 		works.push({ uid : uid, score : scores[uid] });
 
-	sequelize.Promise.each(works, wk => {
+	sequelize.Promise.each(works, (wk : any)=> {
 		return UserDao.add_money(wk.uid, wk.score);
 	});
 }
 
-function initBanker(room) {
+function initBanker(room : Room) {
+	// TODO
 	let banker = {
+		id : 10000,
 		account : '3492934349',
 		name : '呵呵',
 		avatar : 2,
 		balance : 9274612788,
+		profit : 0,
 		is_robot : true
 	};
 
 	room.banker = banker;
 }
 
-function resetExpired(room, timeout) {
-	room.expired = Math.floor(Date.now() / 1000) + timeout;
+function resetExpired(room : Room, timeout : number) {
+	room.expire = Math.floor(Date.now() / 1000) + timeout;
 }
 
-function getRoomDetail(room) {
+function getRoomDetail(room : Room) {
     return {
         id : room.id,
         name : room.name,
         stage : STAGES[room.stage],
-        expire : room.expired,
+        expire : room.expire,
         round : room.round,
         dices : room.dices,
         result : room.result,
@@ -264,12 +323,12 @@ function getRoomDetail(room) {
     };
 }
 
-export function createRoom(roominfo) {
-    let room = {
+export function createRoom(roominfo : any) {
+    let room : Room = {
         id: roominfo.room_id,     	// 桌子ID
         name: roominfo.name,      	// 桌名
 		config: roominfo.config,
-        expired: 0,      			// 本期即将开牌时间点
+        expire: 0,      			// 本期即将开牌时间点
         round: 1,        			// 第几期
 		dices: [],
         result: '',      			// 当期胜负, R: 大, G: 豹子, B: 小; 如 R12, G6, B4
@@ -282,11 +341,11 @@ export function createRoom(roominfo) {
 			triple : 0,
 			big : 0,
 			small : 0,
-			big_total: 0,
-			small_total: 0
+			big_bet_total: 0,
+			small_bet_total: 0
 		},
-		banker : null,
-		stage : RoomStage.ROOM_STAGE_ROB
+		stage : RoomStage.ROOM_STAGE_ROB,
+		robs : [],
     };
 
 	initBanker(room);
@@ -302,10 +361,10 @@ export function createRoom(roominfo) {
     return room;
 }
 
-export function tick(room) {
+export function tick(room : Room) {
 	let now = Math.floor(Date.now() / 1000);
 
-	if (now < room.expired)
+	if (now < room.expire)
 		return;
 
 	let stage = room.stage;
@@ -327,10 +386,10 @@ export function tick(room) {
 		enter(room);
 }
 
-export function playerBet(room, player, bet) {
+export function playerBet(room : Room, player : Player, bet : Bet) {
     let stage = room.stage;
 
-    if (stage != 'bet')
+    if (stage != RoomStage.ROOM_STAGE_BET)
         return;
 
     room.bets.push(bet);
@@ -342,7 +401,7 @@ export function playerBet(room, player, bet) {
     mroom.sendMsg(player, 'player_bet_push', content);
 }
 
-export function enterRoom(room, player) {
+export function enterRoom(room : Room, player : Player) {
     let id = player.id;
 
     let found = false;
@@ -364,7 +423,7 @@ export function enterRoom(room, player) {
     mroom.sendMsg(player, 'enter_room_re', content);
 }
 
-export function leaveRoom(room, player) {
+export function leaveRoom(room : Room, player : Player) {
     let id = player.id;
 
     let off = -1;
@@ -379,7 +438,7 @@ export function leaveRoom(room, player) {
     }
    
     if (off >= 0)
-        room.splice(off, 1);
+        players.splice(off, 1);
 }
 
 

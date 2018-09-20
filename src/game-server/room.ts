@@ -3,7 +3,7 @@
 
 import specs from './specs';
 
-export function sendMsg(player, type, content) {
+export function sendMsg(player : any, type : string, content : any) {
 	let ret = {
 		type : type,
 		content : content
@@ -12,7 +12,7 @@ export function sendMsg(player, type, content) {
 	player.ws.send(JSON.stringify(ret));
 }
 
-export function broadcast(room, type, content) {
+export function broadcast(room : any, type : string, content : any) {
 	let ret = {
 		type : type,
 		content : content
@@ -20,13 +20,13 @@ export function broadcast(room, type, content) {
 
 	let msg = JSON.stringify(ret);
 
-	room.players.forEach(x => {
+	room.players.forEach((x : any) => {
 		x.ws.send(msg);
 	});
 }
 
-export function getPlayers(room) {
-	let players = room.players.map(x => {
+export function getPlayers(room : any) {
+	let players = room.players.map((x : any) => {
 		return {
 			id : x.id,
 			avatar : x.avatar,
@@ -39,7 +39,7 @@ export function getPlayers(room) {
     return players;
 }
 
-export function createRoom(roominfo) {
+export function createRoom(roominfo : any) {
 	let spec = specs[roominfo.type];
 
 	if (!spec)
@@ -51,13 +51,13 @@ export function createRoom(roominfo) {
 	return room;
 }
 
-export function tick(room) {
+export function tick(room : any) {
 	let spec = room.spec;
 
 	spec.tick(room);
 }
 
-export function enterRoom(room, player) {
+export function enterRoom(room : any, player : any) {
     console.log('enterRoom id', room.id, 'account', player.account);
     
     let spec = room.spec;
@@ -65,13 +65,13 @@ export function enterRoom(room, player) {
     spec.enterRoom(room, player);
 }
 
-export function leaveRoom(room, player) {
+export function leaveRoom(room : any, player : any) {
     let spec = room.spec;
 
     spec.leaveRoom();
 }
 
-export function playerBet(room, player, bet) {
+export function playerBet(room : any, player : any, bet : any) {
     let spec = room.spec;
 
     spec.playerBet(room, player, bet);

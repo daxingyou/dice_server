@@ -1,9 +1,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import sequelize from '../db/db';
 
-let dao:any = {};
+let specs:any = {};
 
 fs.readdirSync(__dirname)
 .filter(file => {
@@ -13,10 +12,8 @@ fs.readdirSync(__dirname)
 	let content = require(path.join(__dirname, file));
 	let base = path.basename(file, '.js');
 
-	dao[base] = content;
+	specs[base] = content;
 });
 
-dao['sequelize'] = sequelize;
-
-export default dao;
+export default specs;
 
