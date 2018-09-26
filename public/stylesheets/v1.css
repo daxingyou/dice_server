@@ -1,0 +1,45 @@
+html,body {margin:0;padding:0; color:#444;font-size:14px;}
+img {border:none;}
+a{text-decoration: none; color:#444;}
+a:hover {text-decoration: none; color: #f93;}
+#container {width:1170px; margin:10px auto;}
+#container:before, .container:after, .clearfix:before, .clearfix:after, .dialog-header:before, .dialog-header:after {display: table; content: " ";}
+table {text-align: center;}
+input,select,textarea {border:1px solid #ddd;}
+input:focus {outline: none;}
+.bb-bar select {min-width:60px; height:28px;}
+.bb-bar input {min-width:60px; height:24px;}
+.container:after, .clearfix:after, .dialog-header:after {clear:both;}
+.w-2{width:50%; float:left; box-sizing: border-box; position: relative;}
+.w-2:nth-child(2n+1){padding-left:0; padding-right:.8rem}
+.w-2:nth-child(2n){ padding-left: .8rem;padding-right:0;}
+.w-3{width:33.33%; padding:.6rem .4rem; float:left; box-sizing: border-box; position: relative;}
+.w-3:nth-child(3n+1){padding-left:0; padding-right:.8rem}
+.w-3:nth-child(3n){ padding-left: .8rem;padding-right:0;}
+.w-4{width:25%; padding:.6rem .3rem; float:left; box-sizing: border-box; position: relative;}
+.w-4:nth-child(4n+1){padding-left:0; padding-right:.6rem}
+.w-4:nth-child(4n){ padding-left: .6rem;padding-right:0;}
+.center-block {display: block; margin-right: auto;  margin-left: auto;}
+.pull-right {float: right !important;}
+.pull-left {float: left !important;}
+.hide {display: none !important;}
+.show {display: block !important;}
+#footer {padding:15px 0; border-top:1px solid #ddd; width: 100%; color:#999;}
+#footer a {color:#999;}
+#footer a:hover {color:#9c3;}
+#footer .func-title {font-size:16px; color:#ddd;}
+#footer .func-item {font-size:14px; margin-top:10px;}
+.dialog {width:350px; border:1px solid #ddd; background:#fff; display:none; box-shadow: 0 3px 9px rgba(0, 0, 0, .5);}
+.dialog-header {border-bottom:1px solid #ddd; padding:10px;}
+.dialog-title {float:left !important;}
+.dialog-close {float: right !important; cursor:pointer;}
+.dialog-body {padding:10px;}
+.dialog-body input {width:177px; height:22px;}
+.dialog-body select {width:180px; height:28px;}
+.btn { padding: 5px 20px; font-size: 14px; text-align: center; vertical-align: middle; color: #fff; border:none;}
+.btn-sm { padding: 2px 10px; font-size: 13px; text-align: center; vertical-align: middle; color: #fff; border:none;}
+.defbtn {background-color: #ddd; color:#333;}
+.defbtn:focus, .mybtn.focus { background-color: #ccc;  }
+.defbtn:hover { background-color: #ccc; }
+.btn-peaks {color: #fff; background-color: #5cb85c; border-color: #4cae4c; }
+.btn-peaks:hover {background-color: #6b6; border-color: #5b5; }

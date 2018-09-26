@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html> 
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<title>山峰后台</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.10.0/js/md5.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/css/jquery.dataTables.min.css" />
+<script src="javascripts/bundle.js?v=002"></script>
+<link rel="stylesheet" href="stylesheets/v1.css" />
+<style>
+#header {width:100%; height:50px; font-size:14px; background-color:#1D2024; color:#fff;}
+#navbar {position:fixed; top:50px; left:0; bottom:0; width:100px; border-right:1px solid #ddd;}
+#bodybox {position:fixed; top:55px; left:110px; bottom:5px; right:10px;}
+#navbar ul {padding:0; list-style:none; width:100%;}
+#navbar li {color:#888; padding:8px 0 8px 20px; cursor:pointer; border-bottom:1px solid #eee;}
+#navbar li:hover {background:#eee;}
+#navbar .selected { color:#333; background:#eee;}
+.page {display:none;}
+.add-label {float:left; width:100px; padding-right:20px; text-align:right; }
+.add-input {float:left; width:300px;}
+</style>
+</head>
+<body>
+<div id="header">
+    <div class="pull-right" style="margin:15px 15px 0 0;">
+        <span class="uname"></span>
+        &nbsp;&nbsp;
+        <span class="logout" style="cursor:pointer;">退出</span>
+    </div>
+    <div style="padding:10px; font-size:24px;">山峰管理后台</div>
+    <div class="clearfix"></div>
+</div>
+<div id="navbar">
+<ul>
+    <li page="company">公司列表</li>
+    <li page="add-company">创建服务商</li>
+    <li page="add-club">创建俱乐部</li>
+    <li page="user">人员列表</li>
+    <li page="clubtable">桌子列表</li>
+    <li page="add-clubtable">创建桌子</li>
+</ul>
+</div>
+<div id="bodybox">
+    <div class="page" id="page-add-company" >
+        <div style="width:500px; margin:20px auto;">
+            <div class="add-label">名称</div><div class="add-input"><input class="name" /></div><div class="clearfix"></div><br/><br/>
+            <div class="add-label">登陆密码</div><div class="add-input"><input class="pwd" /></div><div class="clearfix"></div><br/><br/>
+            <div class="add-label">介绍</div>
+            <div style="float:left; width:300px;"><textarea style="width:300px;height:100px;" class="desc"></textarea></div>
+            <div class="clearfix"></div>
+            <div style="margin:30px 0 0 120px">
+                <button class="btn btn-peaks submit-btn">提交</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page-add-clubtable" >
+        <div style="width:500px; margin:20px auto;">
+            <div class="add-label">所属俱乐部</div><div class="add-input"><select class="select-club"></select></div><div class="clearfix"></div><br/><br/>
+            <div class="add-label">桌子名称</div><div class="add-input"><input class="name" /></div><div class="clearfix"></div><br/><br/>
+            <div class="add-label">桌子样式</div><div class="add-input"><input class="style" value=1 /></div><div class="clearfix"></div><br/><br/>
+            <div class="add-label">最大玩家数</div><div class="add-input"><input class="max-player" value=5 /></div><div class="clearfix"></div><br/><br/>
+            <div class="add-label">最大金额</div><div class="add-input"><input class="max-bet" value=1000 /></div><div class="clearfix"></div><br/><br/>
+            <div class="add-label">最小金额</div><div class="add-input"><input class="min-bet" value=100 /></div><div class="clearfix"></div><br/><br/>
+            <div style="margin:30px 0 0 120px">
+                <button class="btn btn-peaks submit-btn">创 建</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page-company" >
+        <table class="table table-striped table-hover table-bordered display nowrap cell-border" width="100%"></table>
+        <div class="bb-bar" style="margin-top:15px;">
+            <div class="pull-left" style="width:70px; margin-right:10px;">
+                <select class="select-perpage">
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="30">50</option>
+                    <option value="30">500</option>
+                </select>
+            </div>
+			<div class="pull-left" style="margin-top:5px;">每页</div>
+			<div class="pull-left" style="margin:5px 40px 0 40px;">
+				总计：<span class="total-count">0</span>
+			</div>
+            <div class="pull-right" style="margin-left:30px;">
+                <button type="button" class="btn defbtn btn-goto-prev">上一页</button>
+                <button type="button" class="btn defbtn btn-goto-next">下一页</button>
+            </div>
+            <div class="pull-right" style="margin-top:5px;">
+                / <span class="total-page">0</span>
+            </div>
+            <div class="pull-right" style="margin-right:10px;">
+                <select class="page-num"></select>
+            </div>
+            <div class="clearfix"></div>
+ 	   </div>
+    </div>
+
+    <div class="page" id="page-user" >
+        <table class="table table-striped table-hover table-bordered display nowrap cell-border" width="100%"></table>
+        <div class="bb-bar" style="margin-top:15px;">
+            <div class="pull-left" style="width:70px; margin-right:10px;">
+                <select class="select-perpage">
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="30">50</option>
+                    <option value="30">500</option>
+                </select>
+            </div>
+			<div class="pull-left" style="margin-top:5px;">每页</div>
+			<div class="pull-left" style="margin:5px 40px 0 40px;">
+				总计：<span class="total-count">0</span>
+			</div>
+            <div class="pull-right" style="margin-left:30px;">
+                <button type="button" class="btn defbtn btn-goto-prev">上一页</button>
+                <button type="button" class="btn defbtn btn-goto-next">下一页</button>
+            </div>
+            <div class="pull-right" style="margin-top:5px;">
+                / <span class="total-page">0</span>
+            </div>
+            <div class="pull-right" style="margin-right:10px;">
+                <select class="page-num"></select>
+            </div>
+            <div class="clearfix"></div>
+ 	   </div>
+    </div>
+
+    <div class="page" id="page-clubtable" >
+        <table class="table table-striped table-hover table-bordered display nowrap cell-border" width="100%"></table>
+        <div class="bb-bar" style="margin-top:15px;">
+            <div class="pull-left" style="width:70px; margin-right:10px;">
+                <select class="select-perpage">
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="30">50</option>
+                    <option value="30">500</option>
+                </select>
+            </div>
+			<div class="pull-left" style="margin-top:5px;">每页</div>
+			<div class="pull-left" style="margin:5px 40px 0 40px;">
+				总计：<span class="total-count">0</span>
+			</div>
+            <div class="pull-right" style="margin-left:30px;">
+                <button type="button" class="btn defbtn btn-goto-prev">上一页</button>
+                <button type="button" class="btn defbtn btn-goto-next">下一页</button>
+            </div>
+            <div class="pull-right" style="margin-top:5px;">
+                / <span class="total-page">0</span>
+            </div>
+            <div class="pull-right" style="margin-right:10px;">
+                <select class="page-num"></select>
+            </div>
+            <div class="clearfix"></div>
+ 	   </div>
+    </div>
+
+
+</div>
+</body>
+</html>

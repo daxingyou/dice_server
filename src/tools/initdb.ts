@@ -1,30 +1,34 @@
 
 import sequelize from '../db/db';
-import dao from '../dao';
 
 sequelize.sync({ force : true })
 .then(() => {
-	return sequelize.transaction(t => {
-		return sequelize.models['User'].create({
-			account : '34598948523',
-			password : '1234',
-			nickname : '测试',
-			phone : '13485492845',
-			balance : 9999
-		}, { transaction : t })
+	return sequelize.models['User'].create({
+		account : '19106276',
+		password : '96e79218965eb72c92a549dd5a330112',
+		nickname : '茅十八',
+		phone : '13485492845',
+		balance : 99923893
 	});
 })
 .then(() => {
-	return dao['UserDao'].getById(1);
+	return sequelize.models['User'].create({
+        account : '07559576',
+        password : '96e79218965eb72c92a549dd5a330112',
+        nickname : '茅十九',
+        phone : '13485492845',
+        balance : 99923334,
+		is_agent : true,
+		wechat : 123456
+	});
 })
-.then(u => {
-	if (!u) {
-		console.log('user 1 not found');
-		return true;
-	}
-
-	u.nickname = 'test';
-	return u.save();
+.then(() => {
+	return sequelize.models['Room'].create({
+		name : '一号房',
+		server : '娱乐一区',
+		type : 'dice',
+		config : '{}'
+	});
 })
 .then(() => {
 	return sequelize.close();

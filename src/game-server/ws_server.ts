@@ -1,4 +1,14 @@
 
+import * as Token from '../utils/token';
+import session_config from '../config/session';
+import dao from '../dao';
+import * as mroom from './room';
+import * as WebSocket from 'ws';
+
+const userDao = dao['UserDao'];
+const roomDao = dao['RoomDao'];
+const secret = session_config.secret;
+
 interface Player {
 	id : number;
 	account : string;
@@ -10,31 +20,37 @@ interface Player {
 let g_rooms : { [key : number] : any } = {};
 let g_players : { [key : number] : Player } = {};
 
-import * as mroom from './room';
-import dao from '../dao';
-import * as WebSocket from 'ws';
+const port : string = process.env.PORT || '4001';
+const wss = new WebSocket.Server({ port: Number(port) });
 
-const wss = new WebSocket.Server({ port: 4001 });
-
-console.log('Listen on ws 4001');
+console.log('Listen on ws ' + port);
 
 let handler : any = {};
 
-interface EnterRoomContent {
+interface EnterRoomData {
 	token : string;
 }
 
-handler['enter_room'] = function(content : EnterRoomContent, ws : any) {
-    return dao['UserDao'].get_player_by_token(content.token)
-    .then((p :any) => {
+handler['enter_room'] = function(data : EnterRoomData, ws : any) {
+	
+	let token = data.token;
+	let ret = Token.parse(token, secret);
+	if (!ret) {
+		console.log('invalid token');
+		return;
+	}
+
+	return userDao.getById(ret.uid)
+    .then((p : any) => {
         if (!p)
             return true;
 
         let room_id = 1;
-
         let player = {
             id : p.id,
             account : p.account,
+			nickname : p.nickname,
+			balance : p.balance,
             avatar : p.avatar,
             room_id : room_id,
             ws : ws
@@ -44,7 +60,6 @@ handler['enter_room'] = function(content : EnterRoomContent, ws : any) {
         ws.uid = p.id;
 
         let room = g_rooms[room_id];
-
         if (room)
             mroom.enterRoom(room, player);
     })
@@ -53,11 +68,11 @@ handler['enter_room'] = function(content : EnterRoomContent, ws : any) {
     });
 };
 
-interface PlayerBetContent {
+interface PlayerBetData {
 	bet : any;
 }
 
-handler['player_bet'] = function(content : PlayerBetContent, ws : any) {
+handler['player_bet'] = function(data : PlayerBetData, ws : any) {
     let uid = ws.uid;
     let player = g_players[uid];
 
@@ -68,10 +83,10 @@ handler['player_bet'] = function(content : PlayerBetContent, ws : any) {
     let room = g_rooms[room_id];
 
 	if (room)
-		mroom.playerBet(room, player, content.bet);
+		mroom.playerBet(room, player, data.bet);
 };
 
-handler['player_rob'] = function(content : any, ws : any) {
+handler['player_rob'] = function(data : any, ws : any) {
 	// TODO
 }
 
@@ -102,7 +117,7 @@ wss.on('connection', (ws: WebSocket) => {
         let data = JSON.parse(message);
 
 		let type = data.type;
-        let content = data.content;
+        let content = data.data;
 
 		if (!type || !content)
 			return;
@@ -114,15 +129,17 @@ wss.on('connection', (ws: WebSocket) => {
 
     ws.on('close', () => {
 		userLeave(ws);
+		console.log('user leave');
     });
+
+	console.log('new connection');
 });
 
 function loadDeskFromDB() {
-	return dao['RoomDao'].list_rooms(true)
+	return roomDao.list_rooms(true)
     .then((rooms : any) => {
 		rooms.forEach((rm : any) => {
 			let room = mroom.createRoom(rm);
-
 			if (room)
 				g_rooms[rm.id] = room;
 		});
@@ -140,8 +157,10 @@ function mainLoop() {
     }
 }
 
-loadDeskFromDB();
-setInterval(mainLoop, 1000);
+loadDeskFromDB()
+.then(() => {
+	setInterval(mainLoop, 1000);
+	console.log('Start dice main loop');
+});
 
-console.log('Start dice main loop');
 

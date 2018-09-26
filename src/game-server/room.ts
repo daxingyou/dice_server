@@ -3,22 +3,26 @@
 
 import specs from './specs';
 
-export function sendMsg(player : any, type : string, content : any) {
+export function sendMsg(player : any, type : string, data : any) {
 	let ret = {
 		type : type,
-		content : content
+		data : data
 	};
+
+	console.log('sendMsg: ' + JSON.stringify(ret));
 
 	player.ws.send(JSON.stringify(ret));
 }
 
-export function broadcast(room : any, type : string, content : any) {
+export function broadcast(room : any, type : string, data : any) {
 	let ret = {
 		type : type,
-		content : content
+		data : data
 	};
 
 	let msg = JSON.stringify(ret);
+
+	console.log('broadcast: ' + msg);
 
 	room.players.forEach((x : any) => {
 		x.ws.send(msg);
@@ -68,7 +72,7 @@ export function enterRoom(room : any, player : any) {
 export function leaveRoom(room : any, player : any) {
     let spec = room.spec;
 
-    spec.leaveRoom();
+    spec.leaveRoom(room, player);
 }
 
 export function playerBet(room : any, player : any, bet : any) {

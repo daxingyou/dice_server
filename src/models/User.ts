@@ -23,8 +23,11 @@ export default class User extends Model<User> {
 	@Column
 	phone: string;
 
-	@Column
-	icon: number;
+	@Column({
+		allowNull : false,
+		defaultValue : 0
+	})
+	avatar: number;
 
 	@Column({
 		allowNull : false,
@@ -38,11 +41,20 @@ export default class User extends Model<User> {
 	})
 	total_recharge: number;
 
-	@Column
+	@Column({
+		allowNull : false,
+		defaultValue : false
+	})
 	is_agent : boolean;
 
-	@HasMany(() => UserLog)
-	userlogs : UserLog[];
+	@Column({
+		allowNull : false,
+		defaultValue : false
+	})
+	is_robot : boolean;
+
+	@Column
+	wechat : string;
 }
 
 

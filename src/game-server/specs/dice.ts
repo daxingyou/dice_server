@@ -23,7 +23,7 @@ const STAGES = [ 'rob', 'bet', 'open' ];
 interface Player {
 	id : number;
 	account : string;
-	name : string;
+	nickname : string;
 	balance : number;
 	avatar : number;
 	profit : number;
@@ -52,6 +52,7 @@ interface Stat {
 interface Room {
 	id : number;
 	name : string;
+	server : string,
 	config : string;
 	expire : number;
 	round : number;
@@ -71,47 +72,59 @@ interface Room {
 function enter_rob(room : Room) {
 	// 进入抢庄阶段
 
+	console.log('enter_rob');
+
     /* 1. 清空抢庄信息 */
     room.robs = [];
 
-    let content = {
+    let data = {
         stage : 'rob',
         round : room.round,
         expire : room.expire
     };
 
-    mroom.broadcast(room, 'game_stage_push', content);
+    mroom.broadcast(room, 'game_stage_push', data);
 }
 
 function leave_rob(room : Room) {
 	// 离开抢庄阶段
 
-    let content = {
+	console.log('leave_rob');
+
+    let data = {
         banker : room.banker
     };
 
     room.robs = [];
 
-    mroom.broadcast(room, 'game_banker_push', content);
+    mroom.broadcast(room, 'game_banker_push', data);
 }
 
 function enter_bet(room : Room) {
 	// 开始下注阶段
 
-    let content = {
+	console.log('enter_bet');
+
+    let data = {
         stage : 'bet',
-        expire : room.expire
+		round : room.round,
+        expire : room.expire,
+		robots : room.robots
     }
     
-    mroom.broadcast(room, 'game_stage_push', content);
+    mroom.broadcast(room, 'game_stage_push', data);
 }
 
 function leave_bet(room : Room) {
 	// 离开下注阶段
+
+	console.log('leave_bet');
 }
 
 function enter_open(room : Room) {
 	// 进入开牌阶段
+
+	console.log('enter_open');
 
 	/* 1. 摇骰子 */
 	shuffle(room);
@@ -121,32 +134,35 @@ function enter_open(room : Room) {
 
 	/* 3. 广播结果  */
 	let banker = room.banker;
-	let content : any = {
+	let data : any = {
         stage : 'open',
 		round : room.round,
+		expire : room.expire,
+
 		dices : room.dices,
 		records : room.records,
 		result : room.result,
 		banker : {
 			balance : banker ? banker.balance : 0,
 			profit : banker ? banker.profit : 0
-		}
+		},
+		stat : room.stat
 	};
 
 	room.players.forEach((p : Player) => {
-		let self = {
+		data.myself = {
 			balance : p.balance,
 			profit : p.profit
 		};
 
-		content.self = self;
-
-		mroom.sendMsg(p, 'game_stage_push', content);
+		mroom.sendMsg(p, 'game_stage_push', data);
 	});
 }
 
 function leave_open(room : Room) {
 	// 离开开牌阶段
+
+	console.log('leave_open');
 
 	/* 1. 清空玩家下注信息 */
 	room.bets = [];
@@ -212,30 +228,24 @@ function settle(room : Room) {
 
 	let big_win = false;
 	let small_win = false;
+	let triple = (dices[0] == dices[1] && dices[1] == dices[2]);
 
-	if (dices[0] == dices[1] && dices[1] == dices[2]) {
-		flag = 'G';
+	if (triple)
 		stat.triple ++;
-	} else if (count <= 10 ) {
-		flag = 'B';
+
+	if (count <= 10 ) {
+		flag = 'S';
 		stat.small ++;
 
-		small_win = true;
+		if (!triple)
+			small_win = true;
 	} else {
-		flag = 'R';
+		flag = 'B';
 		stat.big ++;
 
-		big_win = true;
+		(!triple)
+			big_win = true;
 	}
-
-	let result = flag + count;
-	let records = room.records;
-
-    records.push(result);
-	if (records.length > MAX_RECORDS)
-		records.splice(0, records.length - MAX_RECORDS);
-
-	room.result = result;
 
 	let bets = room.bets;
 	let scores : any = {};
@@ -276,6 +286,18 @@ function settle(room : Room) {
 		banker.balance += banker_sc;
 	}
 
+	/* update result & records */
+	let w = banker_sc >= 0 ? 'w' : 'l';
+	let result = flag + dices[0] + dices[1] + dices[2] + w;
+	let records = room.records;
+
+    records.push(result);
+	if (records.length > MAX_RECORDS)
+		records.splice(0, records.length - MAX_RECORDS);
+
+	room.result = result;
+
+	/* update balance */
 	let sequelize = dao['sequelize'];
 	let UserDao = dao['UserDao'];
 	let works = [];
@@ -284,7 +306,7 @@ function settle(room : Room) {
 		works.push({ uid : uid, score : scores[uid] });
 
 	sequelize.Promise.each(works, (wk : any)=> {
-		return UserDao.add_money(wk.uid, wk.score);
+		return UserDao.addMoney(wk.uid, wk.score);
 	});
 }
 
@@ -293,7 +315,7 @@ function initBanker(room : Room) {
 	let banker = {
 		id : 10000,
 		account : '3492934349',
-		name : '呵呵',
+		nickname : '呵呵',
 		avatar : 2,
 		balance : 9274612788,
 		profit : 0,
@@ -310,6 +332,7 @@ function resetExpired(room : Room, timeout : number) {
 function getRoomDetail(room : Room) {
     return {
         id : room.id,
+		server : room.server,
         name : room.name,
         stage : STAGES[room.stage],
         expire : room.expire,
@@ -323,10 +346,71 @@ function getRoomDetail(room : Room) {
     };
 }
 
+function initRobots(room : Room) {
+
+	room.robots = [
+		{
+			id : 1000,
+			account : '23842034',
+			nickname : '小舟元宝',
+			balance : 83760,
+			avatar : 7,
+			profit : 0,
+			is_robot : true
+		},
+		{
+			id : 1001,
+			account : '84038204',
+			nickname : '我来看看的',
+			balance : 3840,
+			avatar : 4,
+			profit : 0,
+			is_robot : true
+		},
+		{
+			id : 1002,
+			account : '73457845',
+			nickname : '点点点',
+			balance : 29384,
+			avatar : 2,
+			profit : 0,
+			is_robot : true
+		},
+		{
+			id : 1003,
+			account : '83475483',
+			nickname : '出啥买啥',
+			balance : 1873484,
+			avatar : 8,
+			profit : 0,
+			is_robot : true
+		},
+		{
+			id : 1004,
+			account : '49594853',
+			nickname : '我是赌神',
+			balance : 76540,
+			avatar : 3,
+			profit : 0,
+			is_robot : true
+		},
+		{
+			id : 1005,
+			account : '20343435',
+			nickname : '林发进',
+			balance : 760945,
+			avatar : 9,
+			profit : 0,
+			is_robot : true
+		}
+	];
+}
+
 export function createRoom(roominfo : any) {
     let room : Room = {
-        id: roominfo.room_id,     	// 桌子ID
+        id: roominfo.id,     	// 桌子ID
         name: roominfo.name,      	// 桌名
+		server : roominfo.server,
 		config: roominfo.config,
         expire: 0,      			// 本期即将开牌时间点
         round: 1,        			// 第几期
@@ -349,14 +433,16 @@ export function createRoom(roominfo : any) {
     };
 
 	initBanker(room);
+	initRobots(room);
 
 	let stage = RoomStage.ROOM_STAGE_ROB;
 	let nw = listStage[stage];
+
+	resetExpired(room, nw.timeout);
+
 	let enter = nw.enter;
 	if (enter)
 		enter(room);
-
-	resetExpired(room, nw.timeout);
 
     return room;
 }
@@ -392,13 +478,25 @@ export function playerBet(room : Room, player : Player, bet : Bet) {
     if (stage != RoomStage.ROOM_STAGE_BET)
         return;
 
+	let total = 0;
+	room.bets.forEach(x => {
+		if (x.uid == player.id)
+			total += x.amount;
+	});
+
+	if (total + bet.amount > player.balance) {
+		mroom.sendMsg(player, 'player_bet_push', { bet : bet, valid : false });
+		return;
+	}
+
     room.bets.push(bet);
 
-    let content = {
-        bet : bet
+    let data = {
+        bet : bet,
+		valid : true
     };
 
-    mroom.sendMsg(player, 'player_bet_push', content);
+    mroom.sendMsg(player, 'player_bet_push', data);
 }
 
 export function enterRoom(room : Room, player : Player) {
@@ -418,9 +516,9 @@ export function enterRoom(room : Room, player : Player) {
     if (!found)
         players.push(player);
 
-    let content = getRoomDetail(room);
+    let data = getRoomDetail(room);
 
-    mroom.sendMsg(player, 'enter_room_re', content);
+    mroom.sendMsg(player, 'enter_room_re', data);
 }
 
 export function leaveRoom(room : Room, player : Player) {

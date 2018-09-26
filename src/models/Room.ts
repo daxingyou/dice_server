@@ -13,7 +13,14 @@ export default class Room extends Model<Room> {
 	@Column
 	server : string;
 
-	@Column
+	@Column({
+		allowNull : false,
+	})
+	type : string;
+
+	@Column({
+		allowNull : false
+	})
 	config : string;
 
 	@Column({

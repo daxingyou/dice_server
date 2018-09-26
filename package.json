@@ -1,0 +1,40 @@
+{
+  "name": "dice_server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "@types/express-session": "^1.15.10",
+    "@types/express-ws": "^3.0.0",
+    "@types/morgan": "^1.7.35",
+    "@types/speakeasy": "^2.0.2",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "ejs": "~2.5.7",
+    "express": "^4.16.3",
+    "express-mysql-session": "^2.0.1",
+    "express-ws": "^4.0.0",
+    "http-errors": "~1.6.2",
+    "morgan": "~1.9.0",
+    "mysql2": "^1.6.1",
+    "reflect-metadata": "^0.1.12",
+    "sequelize": "^4.38.0",
+    "sequelize-typescript": "^0.6.6",
+    "speakeasy": "^2.0.0",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^2.0.0",
+    "@types/body-parser": "^1.17.0",
+    "@types/cookie-parser": "^1.4.1",
+    "@types/cors": "^2.8.4",
+    "@types/es6-promise": "^3.3.0",
+    "@types/express": "^4.16.0",
+    "@types/express-validator": "^3.0.0",
+    "@types/jsonwebtoken": "^7.2.8",
+    "@types/node": "^10.5.8",
+    "@types/sequelize": "^4.27.24"
+  }
+}

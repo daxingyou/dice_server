@@ -16,13 +16,16 @@ export default class UserLog extends Model<UserLog> {
 	@Column({
 		allowNull : false
 	})
-	target : number
+	account : string
 
-	@ForeignKey(() => User)
-	@Column
-	user_id : number
+	@Column({
+		allowNull : false
+	})
+	target : string
 
-	@BelongsTo(() => User)
-	user : User
+	@Column({
+		allowNull : false,
+	})
+	amount : number
 }
 
