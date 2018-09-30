@@ -33,6 +33,6 @@ export default new Sequelize({
 
 	timezone: '+08:00',
 	operatorsAliases: true,
-	logging: true
+	logging: false 
 });
 

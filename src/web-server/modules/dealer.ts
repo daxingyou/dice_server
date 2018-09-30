@@ -61,10 +61,35 @@ export function transfer(param : TransferParam) {
 	});
 }
 
+export function list_top_players() {
+    
+    let data = [
+        {
+            uid : 1000,
+            nickname : '娱乐专区@繁华落寞小鸟生',
+            balance : 9999999,
+            gift : 200,
+            got : false
+        },
+        {
+            uid : 1001,
+            nickname : '娱乐专区@繁华落寞小鸟生',
+            balance : 9999999,
+            gift : 200,
+            got : false
+        }
+    ];
+
+    return new sequelize.Promise((resolve : any, reject : any) => {
+        return resolve({ code : 0, data : data });
+    });
+}
+
 const exp : any = {
 	'list_dealers' : list_dealers,
 	'list_dealer_records' : list_dealer_records,
-	'transfer' : transfer
+	'transfer' : transfer,
+    'list_top_players' : list_top_players
 };
 
 export default exp;

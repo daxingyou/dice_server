@@ -15,7 +15,7 @@ export function sendMsg(player : any, type : string, data : any) {
 }
 
 export function broadcast(room : any, type : string, data : any) {
-	let ret = {
+	let ret : any  = {
 		type : type,
 		data : data
 	};
@@ -79,6 +79,12 @@ export function playerBet(room : any, player : any, bet : any) {
     let spec = room.spec;
 
     spec.playerBet(room, player, bet);
+}
+
+export function playerRob(room : any, player : any, rob : any) {
+    let spec = room.spec;
+
+    spec.playerRob(room, player, rob);
 }
 
 

@@ -43,6 +43,18 @@ export default class User extends Model<User> {
 
 	@Column({
 		allowNull : false,
+		defaultValue : 0
+	})
+	total_withdraw: number;
+
+    @Column({
+        allowNull : false,
+        defaultValue : 0
+    })
+    total_win : number;
+
+	@Column({
+		allowNull : false,
 		defaultValue : false
 	})
 	is_agent : boolean;
@@ -52,6 +64,12 @@ export default class User extends Model<User> {
 		defaultValue : false
 	})
 	is_robot : boolean;
+
+	@Column({
+		allowNull : false,
+		defaultValue : false
+	})
+	is_login : boolean;
 
 	@Column
 	wechat : string;

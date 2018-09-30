@@ -86,8 +86,22 @@ handler['player_bet'] = function(data : PlayerBetData, ws : any) {
 		mroom.playerBet(room, player, data.bet);
 };
 
-handler['player_rob'] = function(data : any, ws : any) {
-	// TODO
+interface PlayerRobData {
+    rob : any;
+}
+
+handler['player_rob'] = function(data : PlayerRobData, ws : any) {
+    let uid = ws.uid;
+    let player = g_players[uid];
+
+    if (!player)
+        return;
+
+	let room_id = player.room_id;
+    let room = g_rooms[room_id];
+
+	if (room)
+		mroom.playerRob(room, player, data.rob);
 }
 
 handler['sync_clock'] = function() {

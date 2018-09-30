@@ -33,10 +33,24 @@ export function createUser(param : CreateUserParams) {
 
 
 export function addMoney(uid : number, score : number) {
+    let opt : any = { id : uid };
+
+    if (score < 0)
+        opt['balance'] = { $gte : (0 - score) };
+
 	return User.update(
-		{ balance : sequelize.literal('balance+' + score) },
-		{ where : { id : uid } }
-	 );
+		{
+            balance : sequelize.literal('balance+' + score),
+            total_win : sequelize.literal('total_win+' + score)
+        },
+		{ where : opt }
+	)
+    .then(x => {
+        if (x[0] !== 1)
+            return Promise.reject('余额不足');
+
+        return Promise.resolve(true);
+    });
 }
 
 export function listDealers() {
@@ -86,7 +100,7 @@ export function listDealerRecords(uid : number, page : number) {
 					account : x.account,
 					target : x.target,
 					amount : x.amount,
-					create_at : x.created_at
+					create_at : x.created_at.getTime() / 1000
 				};
 			});
 

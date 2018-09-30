@@ -15,11 +15,11 @@ sequelize.sync({ force : true })
 	return sequelize.models['User'].create({
         account : '07559576',
         password : '96e79218965eb72c92a549dd5a330112',
-        nickname : '茅十九',
+        nickname : '888娱乐城微信',
         phone : '13485492845',
         balance : 99923334,
 		is_agent : true,
-		wechat : 123456
+		wechat : '986539376'
 	});
 })
 .then(() => {
