@@ -164,7 +164,6 @@ function loadDeskFromDB() {
 }
 
 function mainLoop() {
-    let now = Math.floor(Date.now() / 1000);
     for (let room_id in g_rooms) {
         let room = g_rooms[room_id];
 		mroom.tick(room);
@@ -173,7 +172,7 @@ function mainLoop() {
 
 loadDeskFromDB()
 .then(() => {
-	setInterval(mainLoop, 1000);
+	setInterval(mainLoop, 100);
 	console.log('Start dice main loop');
 });
 

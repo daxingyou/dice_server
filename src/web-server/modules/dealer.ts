@@ -1,4 +1,5 @@
 
+import md5 from '../../utils/md5';
 import * as Token from '../../utils/token';
 import dao from '../../dao';
 import session_config from '../../config/session'
@@ -38,21 +39,35 @@ export function list_dealer_records(param : ListDealerRecordsParam) {
 }
 
 interface TransferParam {
-	token : string,
-	to : string,
-	amount : number
+	token : string;
+    sign : string;
+    noice : string;
+	to : string;
+	amount : number;
 }
 
 export function transfer(param : TransferParam) {
 	let ret = Token.parse(param.token, session_config.secret);
-	if (!ret)
+	if (!ret || !ret.uid)
 		return { code : 404, msg : 'token error' };
 
 	let amount = param.amount;
 	if (!amount || amount <= 0)
 		return { code : 500, msg : '转账金额必须大于0' };
 
-	return userDao.transfer(ret.uid, param.to, amount)
+    let uid : number = ret.uid;
+
+    return userDao.getById(uid)
+    .then((u : any) => {
+        if (!u)
+            return Promise.reject('玩家不存在');
+
+        let sign = md5(u.password + param.noice);
+        if (sign != param.sign)
+            return Promise.reject('密码错误');
+
+	    return userDao.transfer(uid, param.to, amount);
+    })
 	.then(() => {
 		return { code : 0 };
 	})
@@ -85,11 +100,32 @@ export function list_top_players() {
     });
 }
 
+interface GetUserInfoParam {
+    uid : number;
+}
+
+export function get_user_info (param : GetUserInfoParam) {
+    return userDao.getById(param.uid)
+    .then((u : any) => {
+        if (!u)
+            return { code : 500, msg : 'user not found' };
+
+        let data : any = {};
+        let fs = [ 'account', 'nickname', 'balance', 'avatar' ];
+        fs.forEach(x => {
+            data[x] = u[x];
+        });
+
+        return { code : 0, data : data };
+    });
+}
+
 const exp : any = {
 	'list_dealers' : list_dealers,
 	'list_dealer_records' : list_dealer_records,
 	'transfer' : transfer,
-    'list_top_players' : list_top_players
+    'list_top_players' : list_top_players,
+    'get_user_info' : get_user_info
 };
 
 export default exp;

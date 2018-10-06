@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玩家管理</title>
+
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/local.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid.min.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid-theme.min.css" />
+
+    <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/jsgrid/jsgrid.js"></script>
+    <script type="text/javascript" src="js/jsgrid/i18n/jsgrid-zh-cn.js"></script>
+
+    <script type="text/javascript" src="js/client.js"></script>
+
+    <link href="emoji.css" rel="stylesheet" type="text/css" />
+    <script src="emoji.js"></script>
+
+    <script type="text/javascript">
+
+    function b64DecodeUnicode(str) {
+
+        return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    }
+
+    function currentTime(value){
+        var d = new Date(value),str = '';
+         str += d.getFullYear()+'年';
+         str  += d.getMonth() + 1+'月';
+         str  += d.getDate()+'日';
+         str += d.getHours()+'时';
+         str  += d.getMinutes()+'分';
+        str+= d.getSeconds()+'秒';
+        return str;
+        }
+
+    function init_ui(all_users)
+    {
+        jsGrid.locale("zh-cn");
+        $("#users_table").jsGrid({
+            width: "100%",
+            height: "500px",
+
+            inserting: false,
+            editing: true,
+            sorting: true,
+            paging: true,
+            filtering: true,
+            autoload: true,
+
+            controller :  {
+                loadData: function (filter){
+                    if ( filter.account )
+                    {
+                        for ( var n = 0; n < all_users.length ; n++)
+                        {
+                            if ( all_users[n].account == filter.account )
+                                return [ all_users[n] ];
+                        }
+                    }
+                    else
+                        return all_users;
+                }
+            },
+
+            fields: [
+                {
+                    title : "ID" ,name: "id", type: "number", width: 30, editing : false, filtering : false
+                },
+                {
+                    title : "账号" ,name: "account", type: "text", width: 30, validate : "required", editing : false, filtering: true,
+                },
+                {
+                    title : "昵称" ,name: "nickname", type: "text", width: 30, validate : "required", editing : false, filtering: false,
+                },
+                {
+                    title : "电话" ,name: "phone", type: "text", width: 30, validate : "required", editing : false, filtering: false,
+                },
+                {
+                    title : "微信" ,name: "wechat", type: "text", width: 30, validate : "required", editing : false, filtering: false,
+                },
+                {
+                    title : "余额" ,name: "balance", type: "number", width: 30,  editing : true, filtering: false,
+                },
+                {
+                    title : "总充值" ,name: "total_recharge", type: "number", width: 30,  editing : false ,filtering: false,
+                },
+                {
+                    title : "总提现" ,name: "total_withdraw", type: "number", width: 30,  editing : false ,filtering: false,
+                },
+                {
+                    title : "总输赢" ,name: "total_win", type: "number", width: 20,  editing : false, filtering: false,
+                },
+                {
+                    title : "注册时间" ,name: "created_at", type: "text", width: 30, validate: "required", editing : false, filtering : false,
+                    itemTemplate : function(value, item) {
+                        return currentTime(value);
+                    }
+                },
+                {
+                    title : "上次登陆时间" ,name: "last_login", type: "text", width: 30, validate: "required",editing : false, filtering : false,
+                    itemTemplate : function(value, item) {
+                        return currentTime(value);
+                    }
+                },
+                { title : "在线", name: "is_login", type: "checkbox", width: 10, validate: "required", editing : false, filtering : false },
+                { title : "商人", name: "is_agent", type: "checkbox", width: 10, validate: "required", editing : true, filtering : false },
+                {
+                    type: "control",
+                    deleteButton : false,
+                }
+            ],
+
+            onItemUpdated: function (grid) {
+                var item = grid.item;
+                api_request("update_user_info", item, function(ret) {
+                    if (ret.errcode == 0)
+                        alert("更新成功");
+                    else
+                        alert("更新失败");
+                });
+            },
+        });
+    }
+
+     $(document).ready(function(){
+
+         api_request("list_all_user", {}, function(ret) {
+             if ( ret.errcode == 0 )
+             {
+                 init_ui(ret.data.users);
+             }
+            else {
+                alert("失败");
+            }
+         });
+     });
+
+    </script>
+
+</head>
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Admin Panel</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li><a href="main.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
+                    <li class="active"><a href="userconfig.html"><i class="fa fa-table"></i> 玩家管理</a></li>
+                    <li><a href="record.html"><i class="fa fa-table"></i>游戏记录查询</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="page-wrapper">
+            玩家列表:<br/>
+            <table id="users_table" ></table>
+            <br/><br/>
+        </div>
+        <!-- /#page-wrapper -->
+    </div>
+    <!-- /#wrapper -->
+</body>
+</html>

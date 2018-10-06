@@ -146,4 +146,7 @@ export function transfer(uid : number, to : string, amount : number) {
 	});
 }
 
+export function listAllUser() {
+    return User.all();
+}
 

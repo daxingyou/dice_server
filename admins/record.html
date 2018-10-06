@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>游戏记录查询</title>
+
+  <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" />
+  <link rel="stylesheet" type="text/css" href="css/local.css" />
+  <link type="text/css" rel="stylesheet" href="css/jsgrid.min.css" />
+  <link type="text/css" rel="stylesheet" href="css/jsgrid-theme.min.css" />
+  <link type="text/css" rel="stylesheet" href="css/jquery-ui.css" />
+
+
+
+  <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+  <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/jsgrid/jsgrid.js"></script>
+  <script type="text/javascript" src="js/jsgrid/i18n/jsgrid-zh-cn.js"></script>
+
+  <script type="text/javascript" src="js/jquery-ui.js"></script>
+
+  <script type="text/javascript" src="js/client.js"></script>
+
+  <script type="text/javascript">
+    function init_transfer_table(data , table_id)
+    {
+        $("#" + table_id).jsGrid({
+            width: "100%",
+            height: "500px",
+
+            inserting: false,
+            editing: false,
+            sorting: true,
+            paging: true,
+            pageSize : 10,
+            filtering: false,
+            autoload: true,
+
+            data: data,
+
+            fields: [
+                {
+                    title : "付款玩家ID" ,name: "account", type: "text", width: 30, editing : false,filtering : false
+                },
+                {
+                    title : "收款玩家ID" ,name: "target", type: "text", width: 30, editing : false,filtering : false
+                },
+                {
+                    title : "金币" ,name: "amount", type: "number", width: 30,  editing : false, filtering : false,
+                },
+                {
+                    title : "交易时间" ,name: "created_at", type: "text", width: 20,  editing : false ,filtering:false,
+                    itemTemplate : function(value,item){
+                        var d = new Date(value);
+                        return d.toLocaleString();
+                    }
+                },
+                {
+                    type: "control",
+                    deleteButton : false ,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        return $result;
+                    }
+                }
+            ]
+        });
+
+    }
+
+    function init_game_table(data, table_id)
+    {
+        $("#" + table_id).jsGrid({
+            width: "100%",
+            height: "500px",
+
+            inserting: false,
+            editing: false,
+            sorting: true,
+            paging: true,
+            pageSize : 10,
+            filtering: false,
+            autoload: true,
+
+            data: data,
+
+            fields: [
+                {
+                    title : "玩家ID", name: "account", type: "text", width: 30, editing : false, filtering : false
+                },
+                {
+                    title : "昵称", name: "nickname", type: "text", width: 20, editing : false, filtering : false
+                },
+                {
+                    title : "下注", name: "bet", type: "text", width: 10, editing : false, filtering : false,
+                    itemTemplate : function(value,item) {
+                        if (value == "small")
+                            return "小";
+                        else if (value == "big")
+                            return "大";
+                        else if (value == "banker")
+                            return "抢庄";
+                        else {
+                            return value;
+                        }
+                    }
+                },
+                {
+                    title : "下注金额", name: "amount", type: "number", width: 30, editing : false, filtering : false
+                },
+                {
+                    title : "结算金额", name: "result", type: "number", width: 30, editing : false, filtering : false
+                },
+                {
+                    title : "房间号" ,name: "room_id", type: "number", width: 20,  editing : false ,filtering:false,
+                },
+                {
+                    title : "期号" , name: "round", type: "number", width: 20,  editing : false, filtering: false,
+                },
+                {
+                    title : "结果", name: "game_result", type: "text", width: 30,  editing : false, filtering: false,
+                    itemTemplate : function(value,item) {
+                        if (!value || value.length == 0)
+                            return '';
+
+                        var flag = value[0];
+                        var ret = '';
+
+                        if (flag == 'S')
+                            ret += '小';
+                        else if (flag == 'B')
+                            ret += '大';
+                        else if (flag == 'L')
+                            ret += '豹';
+
+                        ret += value.substring(1, 4);
+
+                        return ret;
+                    }
+                },
+                {
+                    title : "结算时间" ,name: "created_at", type: "text", width: 20,  editing : false ,filtering:false,
+                    itemTemplate : function(value,item){
+                        var d = new Date(value);
+                        return d.toLocaleString();
+                    }
+                },
+                {
+                    type: "control",
+                    deleteButton : false ,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        return $result;
+                    }
+                }
+            ]
+        });
+    }
+
+
+    $(document).ready(function(){
+       $("#tabs").tabs();
+
+       $("#btn_query_user").on('click', function(){
+          var type = $("#query_user_type").val();
+          var uid = $("#user_id").val();
+          api_request("query_records", { type : type, account : uid }, function(ret){
+              if (ret.errcode == 0) {
+                  if (type == "transfer")
+                     init_transfer_table(ret.data, "user_table");
+                  else
+                     init_game_table(ret.data, "user_table");
+             } else {
+                 alert("失败");
+             }
+          });
+      });
+  });
+  </script>
+
+  <style>
+    table {
+      text-align: center;
+    }
+
+    th {
+      text-align: center;
+    }
+
+    .form-group {
+      margin-left: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="wrapper">
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+        <a class="navbar-brand" href="main.html">Admin Panel</a>
+      </div>
+      <div class="collapse navbar-collapse navbar-ex1-collapse">
+        <ul class="nav navbar-nav side-nav">
+          <li><a href="index.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
+          <li><a href="userconfig.html"><i class="fa fa-table"></i> 玩家管理</a></li>
+          <li  class="active"><a href="record.html"><i class="fa fa-table"></i>游戏记录查询</a></li>
+        </ul>
+      </div>
+    </nav>
+
+
+    <div id="tabs">
+      <ul>
+        <li><a href="#tabs-1">玩家查询</a></li>
+      </ul>
+
+      <div id="tabs-1">
+          查询内容:
+          <select id='query_user_type'>
+              <option value="game">游戏记录查询</option>
+              <option value="transfer">转账记录查询</option>
+          </select>
+          <br/>
+          玩家ID: <input type=text value='' id='user_id' /><br/>
+          <input type=button value='确定' id='btn_query_user' /><br/>
+           <table id="user_table"></table>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+
+</html>
+

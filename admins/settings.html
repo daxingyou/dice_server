@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统公告和招商设置</title>
+
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/local.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid.min.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid-theme.min.css" />
+
+    <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/jsgrid/jsgrid.js"></script>
+    <script type="text/javascript" src="js/jsgrid/i18n/jsgrid-zh-cn.js"></script>
+
+    <script type="text/javascript" src="js/client.js"></script>
+
+    <script type="text/javascript">
+
+    function init_ui(messages)
+    {
+        jsGrid.locale("zh-cn");
+
+        var notices = [];
+        var invests = [];
+
+        messages.forEach(x=>{
+            if (x.type == 'notice')
+                notices.push(x);
+            else if (x.type == 'invest')
+                invests.push(x);
+        });
+
+        $("#notices_table").jsGrid({
+            width: "100%",
+            height: "150px",
+
+            inserting: false,
+            editing: true,
+            sorting: true,
+            paging: true,
+
+            data: notices,
+
+            fields: [
+                {
+                    title : "公告" ,name: "msg", type: "text", width: 200,  editing : true ,
+                    validate : "required"
+                },
+                {
+                    type: "control",
+                    deleteButton : true,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        $result = $result.add(this._createEditButton(item));
+                        return $result;
+                    }
+                }
+            ],
+
+            onItemUpdated: function (grid) {
+
+                var item = grid.item;
+                api_request("user.update_message", item ,function(ret){
+                    if ( ret.errcode == 0 )
+                        alert("更新成功");
+                    else
+                        alert("更新失败");
+                });
+            },
+        });
+
+        $("#invests_table").jsGrid({
+            width: "100%",
+            height: "150px",
+
+            inserting: false,
+            editing: true,
+            sorting: true,
+            paging: true,
+
+            data: invests,
+
+            fields: [
+                {
+                    title : "招商" ,name: "msg", type: "text", width: 200,  editing : true ,
+                    validate : "required"
+                },
+                {
+                    type: "control",
+                    deleteButton : true,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        $result = $result.add(this._createEditButton(item));
+                        return $result;
+                    }
+                }
+            ],
+
+            onItemUpdated: function (grid) {
+
+                var item = grid.item;
+                api_request("user.update_message", item ,function(ret){
+                    if ( ret.errcode == 0 )
+                        alert("更新成功");
+                    else
+                        alert("更新失败");
+                });
+            },
+        });
+
+    }
+
+
+     $(document).ready(function(){
+         api_request('user.list_messages', {}, function(ret){
+             if (ret.errcode == 0) {
+                init_ui(ret.data);
+             } else {
+                alert("失败");
+             }
+         });
+     });
+
+    </script>
+
+</head>
+<body>
+<div id="wrapper">
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Admin Panel</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li><a href="main.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
+                    <li><a href="room.html"><i class="fa fa-tasks"></i> 房间和牌局设置</a></li>
+                    <li><a href="store.html"><i class="fa fa-globe"></i> 商 城 设 置</a></li>
+                    <li><a href="task.html"><i class="fa fa-list-ol"></i> 任 务 设 置</a></li>
+                    <li><a href="gift.html"><i class="fa fa-gift"></i> 奖品设置</a></li>
+                    <li class="active"><a href="settings.html"><i class="fa fa-table"></i> 系统公告和招商设置</a></li>
+                    <li><a href="userconfig.html"><i class="fa fa-table"></i> 用户管理和设置</a></li>
+                    <li><a href="feedback.html"><i class="fa fa-table"></i> 留言和招商</a></li>
+                    <li><a href="query_deal.html"><i class="fa fa-table"></i>充值转账查询</a></li>
+                    <li><a href="dealer.html"><i class="fa fa-table"></i>代理查询</a></li>
+                </ul>
+            </div>
+        </nav>
+     <div id="page-wrapper">
+
+       <div class='row'>
+      </div>
+公告设置:<br/>      <table id="notices_table"></table>
+      <hr>
+      <div class='row'>
+招商设置:<br/>        <table id="invests_table"></table>
+      </div>
+    </div>
+</div>
+</body>
+</html>

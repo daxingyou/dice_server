@@ -1,9 +1,13 @@
+
 'use strict';
 
 import dao from '../../dao';
 import * as mroom from '../room';
 
 const userDao = dao['UserDao'];
+const gameDao = dao['GameDao'];
+const sequelize = dao['sequelize'];
+const Promise = sequelize.Promise;
 
 const MAX_RECORDS = 20;
 const LEOPARD_INTERVAL = 1500;
@@ -16,9 +20,9 @@ enum RoomStage {
 }
 
 enum RoomTimeout {
-	ROOM_TIMEOUT_ROB = 5,
-	ROOM_TIMEOUT_BET = 51,
-	ROOM_TIMEOUT_OPEN = 7
+	ROOM_TIMEOUT_ROB = 5000,
+	ROOM_TIMEOUT_BET = 51000,
+	ROOM_TIMEOUT_OPEN = 7000
 }
 
 enum DiceResult {
@@ -88,7 +92,118 @@ interface Room {
 
 	banker : Player;
     last_leopard : number;
+
+    rob_name : Robot;
+    big_names : Robot[];
+    small_names : Robot[];
+
+    big_next : number;
+    small_next : number;
 }
+
+interface Robot {
+    nickname : string;
+    avatar : number;
+}
+
+let random_names : Robot[] = [
+    {
+        nickname : '若即若离',
+        avatar : 3
+    },
+    {
+        nickname : '阿强',
+        avatar : 5
+    },
+    {
+        nickname : '记忆里只有你',
+        avatar : 2
+    },
+    {
+        nickname : '姿势要帅',
+        avatar : 1
+    },
+    {
+        nickname : '奔跑的蜗牛',
+        avatar : 7
+    },
+    {
+        nickname : '努力做自己',
+        avatar : 6
+    },
+    {
+        nickname : '一帘幽梦',
+        avatar : 4
+    },
+    {
+        nickname : '那些年',
+        avatar : 9
+    },
+    {
+        nickname : '花随风落',
+        avatar : 3
+    },
+    {
+        nickname : '时间旅行',
+        avatar : 7
+    },
+    {
+        nickname : '酱香传承',
+        avatar : 8
+    },
+    {
+        nickname : '你很二啊',
+        avatar : 9
+    },
+    {
+        nickname : '小二妹',
+        avatar : 3
+    },
+    {
+        nickname : '人生如戏',
+        avatar : 2
+    },
+    {
+        nickname : '趁未老',
+        avatar : 4
+    },
+    {
+        nickname : '闹够了没有',
+        avatar : 5
+    },
+    {
+        nickname : '忘记',
+        avatar : 4,
+    },
+    {
+        nickname : '涂涂',
+        avatar : 7
+    },
+    {
+        nickname : '坚持就是胜利',
+        avatar : 9
+    },
+    {
+        nickname : 'MDZZ',
+        avatar : 6
+    },
+    {
+        nickname : '春天的雪',
+        avatar : 2
+    },
+    {
+        nickname : '但求无愧于心',
+        avatar : 6
+    },
+    {
+        nickname : '小舟元宝',
+        avatar : 7
+    },
+    {
+        nickname : '包子世家',
+        avatar : 8
+    }
+];
 
 function parse_player(player : any) {
     let p : any = {};
@@ -115,6 +230,60 @@ function find_player(room : Room, uid : number) {
     return null;
 }
 
+function refresh_players (room : Room) {
+    let players = room.players;
+
+	return sequelize.Promise.each(players, (p : any) => {
+        return userDao.getById(p.id)
+        .then((u : any) => {
+            if (u) {
+                console.log('refresh balancec=' + u.balance + ' uid=' + p.id);
+                p.balance = u.balance;
+            } else
+                console.log('player not found : ' + p.id);
+        });
+	});
+}
+
+function remapNames (room : Room) {
+    let random = random_names.slice(0);
+    let robots = room.robots;
+
+    if (true) {
+        let rob = room.rob_name;
+        let id = Math.floor(Math.random() * (random.length - 1));
+        let rd = random[id];
+
+        rob.nickname = rd.nickname;
+        rob.avatar = rd.avatar;
+        random.splice(id, 1);
+    }
+
+    robots.forEach(x => {
+        let id = Math.floor(Math.random() * (random.length - 1));
+        let rd = random[id];
+
+        x.nickname = rd.nickname;
+        x.avatar = rd.avatar;
+        random.splice(id, 1);
+    });
+
+    room.small_names = [];
+    room.big_names = [];
+
+    for (let i = 0; i < 6; i++) {
+        let id = Math.floor(Math.random() * (random.length - 1));
+        room.small_names.push(random[id]);
+        random.splice(id, 1);
+    }
+
+    for (let i = 0; i < 6; i++) {
+        let id = Math.floor(Math.random() * (random.length - 1));
+        room.big_names.push(random[id]);
+        random.splice(id, 1);
+    }
+}
+
 function enter_rob(room : Room) {
 	// 进入抢庄阶段
 
@@ -126,10 +295,12 @@ function enter_rob(room : Room) {
     let data = {
         stage : 'rob',
         round : room.round,
-        expire : room.expire
+        expire : Math.floor(room.expire / 1000)
     };
 
     mroom.broadcast(room, 'game_stage_push', data);
+
+    remapNames(room);   
 }
 
 function leave_rob(room : Room) {
@@ -159,7 +330,7 @@ function leave_rob(room : Room) {
     }
 
     if (banker == null) {
-        banker = initBanker();
+        banker = initBanker(room.rob_name);
         banker.banker_amount = 400000;
     }
 
@@ -183,6 +354,82 @@ function leave_rob(room : Room) {
     }
 }
 
+function robot_bet(room : Room, bet : string) {
+    let small = bet == 'small';
+
+    if (room.stage != RoomStage.ROOM_STAGE_BET) {
+        room.big_next = 0;
+        room.small_next = 0;
+        return;
+    }
+
+    let next = Date.now() + Math.floor(Math.random() * 3000);
+
+    let fnNext = () => {
+        if (small)
+            room.small_next = next;
+        else
+            room.big_next = next;
+    };
+
+    let names = small ? room.small_names : room.big_names;
+    let rand = Math.floor(Math.random() * (names.length - 1));
+    let nm = names[rand].nickname;
+
+    let stat = room.stat;
+    let status = room.status;
+    let banker_amount = room.banker.banker_amount;
+
+    let limit = 0;
+    if (small) {
+        limit = status.big_total + 100000 - status.small_total;
+    } else {
+        limit = status.small_total + 100000 - status.big_total;
+    }
+
+    limit = Math.floor(limit / 1000);
+    if (limit <= 0) {
+        fnNext();
+        return;
+    }
+
+    let amount = Math.round(limit * Math.random()) * 1000;
+    if (amount == 0) {
+        fnNext();
+        return;
+    }
+
+    if (small) {
+        stat.small_bet_total += amount;
+        status.small_total += amount;
+    } else {
+        stat.big_bet_total += amount;
+        status.big_total += amount;
+    }
+
+    status.small_limit = status.big_total + banker_amount - status.small_total;
+    status.big_limit = status.small_total + banker_amount - status.big_total;
+
+    let bett = {
+        bet : bet,
+        uid : 0,
+        amount : amount,
+        nickname : nm
+    };
+
+    room.bets.push(bett);
+
+    let data = {
+        bet : bett,
+        valid : true,
+        status : status
+    };
+    
+    mroom.broadcast(room, 'player_bet_push', data);
+
+    fnNext();
+}
+
 function enter_bet(room : Room) {
 	// 开始下注阶段
 
@@ -191,15 +438,21 @@ function enter_bet(room : Room) {
     let data = {
         stage : 'bet',
 		round : room.round,
-        expire : room.expire,
+        expire : Math.floor(room.expire / 1000),
 		robots : room.robots
     }
     
     mroom.broadcast(room, 'game_stage_push', data);
+
+    robot_bet(room, 'small');
+    robot_bet(room, 'big');
 }
 
 function leave_bet(room : Room) {
 	// 离开下注阶段
+
+    room.big_next = 0;
+    room.small_next = 0;
 
 	console.log('leave_bet');
 }
@@ -210,33 +463,37 @@ function enter_open(room : Room) {
 	console.log('enter_open');
 
 	/* 2. 计算结果 */
-	settle(room);
-
-	/* 3. 广播结果  */
-	let banker = room.banker;
-	let data : any = {
-        stage : 'open',
-		round : room.round,
-		expire : room.expire,
-
-		dices : room.dices,
-		records : room.records,
-		result : room.result,
-		banker : {
-			balance : banker ? banker.balance : 0,
-			profit : banker ? banker.profit : 0
-		},
-		stat : room.stat
-	};
-
-	room.players.forEach((p : Player) => {
-		data.myself = {
-			balance : p.balance,
-			profit : p.profit
-		};
-
-		mroom.sendMsg(p, 'game_stage_push', data);
-	});
+	return settle(room)
+    .then(() => {
+        return refresh_players(room);
+    })
+    .then(() => {
+    	/* 3. 广播结果  */
+    	let banker = room.banker;
+    	let data : any = {
+            stage : 'open',
+    		round : room.round,
+    		expire : Math.floor(room.expire / 1000),
+    
+    		dices : room.dices,
+    		records : room.records,
+    		result : room.result,
+    		banker : {
+    			balance : banker ? banker.balance : 0,
+    			profit : banker ? banker.profit : 0
+    		},
+    		stat : room.stat
+    	};
+    
+    	room.players.forEach((p : Player) => {
+    		data.myself = {
+    			balance : p.balance,
+    			profit : p.profit
+    		};
+    
+    		mroom.sendMsg(p, 'game_stage_push', data);
+    	});
+    });
 }
 
 function leave_open(room : Room) {
@@ -366,16 +623,30 @@ function settle(room : Room) {
 	let banker_sc = banker.banker_amount;
 
 	bets.forEach((x : Bet) => {
-		if (scores[x.uid] == null)
-			scores[x.uid] = 0;
+        let sc = scores[x.uid];
+        if (sc == null) {
+            sc = { bet : x.bet, amount : 0, result : 0 };
+            scores[x.uid] = sc;
+        }
+        
+        sc.amount += x.amount;
 
 		if ((x.bet == 'small' && small_win) || (x.bet == 'big' && big_win)) {
-			scores[x.uid] += x.amount * 2;
-            banker_sc -= x.amount;
-        } else {
-            banker_sc += x.amount;
+			sc.result += x.amount * 1.98;
         }
 	});
+
+    let status = room.status;
+
+    if (triple) {
+        banker_sc += status.big_total + status.small_total;
+    } else if (small_win) {
+        banker_sc += status.big_total - status.small_total;
+    } else {
+        banker_sc += status.small_total - status.big_total;
+    }
+
+    banker_sc *= 0.99;
 
 	let players = room.players;
 
@@ -386,8 +657,8 @@ function settle(room : Room) {
 		x.profit = 0;
 
 		if (sc != null) {
-			x.balance += sc;
-			x.profit = sc;
+			x.balance += sc.result;
+			x.profit = sc.result;
 		}
 	});
 
@@ -395,10 +666,8 @@ function settle(room : Room) {
 		banker.profit = banker_sc;
 		banker.balance += banker_sc;
 
-        console.log('banker robot: ' + banker.is_robot);
-
         if (!banker.is_robot)
-            scores[banker.id] = banker_sc;
+            scores[banker.id] = { bet : 'banker', amount : banker.banker_amount, result : banker_sc };
 	}
 
 	/* update result & records */
@@ -414,30 +683,45 @@ function settle(room : Room) {
 	room.result = result;
 
 	/* update balance */
-	let sequelize = dao['sequelize'];
-	let works = [];
-
+	let works : any[] = [];
+    let cnt = 0;
 	for (let uid in scores) {
         let sc = scores[uid];
 
-        if (sc != null && sc != 0) {
-            console.log('add score: ' + uid + ' ' + sc);
-		    works.push({ uid : uid, score : sc });
+        if (sc != null && uid != '0') {
+            sc['uid'] = parseInt(uid);
+		    works.push(sc);
+            cnt++;
         }
     }
 
-	sequelize.Promise.each(works, (wk : any)=> {
-		return userDao.addMoney(wk.uid, wk.score);
-	});
+    if (0 == cnt) {
+        return new Promise((resolve : any, reject : any) => {
+            return resolve(true);
+        });
+    }
+
+	return Promise.each(works, (wk : any) => {
+		return userDao.addMoney(wk.uid, wk.result);
+	})
+    .then(() => {
+        return gameDao.createGame(room.id, room.round, result);
+    })
+    .then((x : any) => {
+        let gid = x.id;
+
+        return Promise.each(works, (wk : any) => {
+            return gameDao.createGameLog(wk.uid, gid, wk.bet, wk.amount, wk.result);
+        });
+    });
 }
 
-function initBanker() {
-	// TODO
+function initBanker(rob: Robot) {
 	let banker = {
 		id : 10000,
 		account : '3492934349',
-		nickname : '呵呵',
-		avatar : 2,
+		nickname : rob.nickname,
+		avatar : rob.avatar,
 		balance : 9274612788,
 		profit : 0,
 		is_robot : true,
@@ -448,7 +732,7 @@ function initBanker() {
 }
 
 function resetExpired(room : Room, timeout : number) {
-	room.expire = Math.floor(Date.now() / 1000) + timeout;
+	room.expire = Date.now() + timeout;
 }
 
 function getRoomDetail(room : Room) {
@@ -457,7 +741,7 @@ function getRoomDetail(room : Room) {
 		server : room.server,
         name : room.name,
         stage : STAGES[room.stage],
-        expire : room.expire,
+        expire : Math.floor(room.expire / 1000),
         round : room.round,
         dices : room.dices,
         result : room.result,
@@ -566,8 +850,28 @@ export function createRoom(roominfo : any) {
         },
 
 		robs : [],
-        banker : initBanker(),
-        last_leopard : 0
+        banker : {
+        	id : 0,
+        	account : '0',
+        	nickname : '0',
+        	balance : 0,
+        	avatar : 0,
+        	profit : 0,
+        	is_robot : false,
+            banker_amount : 0
+        },
+
+        last_leopard : 0,
+
+        rob_name : {
+            nickname : '',
+            avatar : 0
+        },
+        small_names : [],
+        big_names : [],
+
+        big_next : 0,
+        small_next : 0
     };
 
 	initRobots(room);
@@ -585,7 +889,15 @@ export function createRoom(roominfo : any) {
 }
 
 export function tick(room : Room) {
-	let now = Math.floor(Date.now() / 1000);
+	let now = Date.now();
+
+    if (room.stage == RoomStage.ROOM_STAGE_BET) {
+        if (room.big_next != 0 && room.big_next < now)
+            robot_bet(room, 'big');
+
+        if (room.small_next != 0 && room.small_next < now)
+            robot_bet(room, 'small');
+    }
 
 	if (now < room.expire)
 		return;

@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代理设置</title>
+
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/local.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid.min.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid-theme.min.css" />
+
+    <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/jsgrid/jsgrid.js"></script>
+    <script type="text/javascript" src="js/jsgrid/i18n/jsgrid-zh-cn.js"></script>
+
+    <script type="text/javascript" src="js/client.js"></script>
+
+    <link href="emoji.css" rel="stylesheet" type="text/css" />
+    <script src="emoji.js"></script>
+
+    <script type="text/javascript">
+
+    function b64DecodeUnicode(str) {
+
+        return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    }
+
+    function currentTime(value){
+        var d = new Date(value),str = '';
+         str += d.getFullYear()+'年';
+         str  += d.getMonth() + 1+'月';
+         str  += d.getDate()+'日';
+         str += d.getHours()+'时';
+         str  += d.getMinutes()+'分';
+        str+= d.getSeconds()+'秒';
+        return str;
+        }
+
+    function init_ui(all_dealers)
+    {
+        jsGrid.locale("zh-cn");
+        $("#dealers_table").jsGrid({
+            width: "100%",
+            height: "500px",
+
+            inserting: false,
+            editing: true,
+            sorting: true,
+            paging: true,
+            filtering: true,
+            autoload: true,
+
+            controller :  {
+                loadData: function (filter) {
+                    if (filter.id)
+                    {
+                        for ( var n = 0; n < all_dealers.length ; n++)
+                        {
+                            if ( all_dealers[n].id == filter.id )
+                                return [ all_dealers[n] ];
+                        }
+                    }
+                    else
+                        return all_dealers;
+                }
+            },
+
+            fields: [
+                {
+                    title : "ID" ,name: "id", type: "number", width: 30, editing : false,filtering : true
+                },
+                {
+                    title : "微信" ,name: "auth_id", type: "text", width: 50, validate : "required", editing : false,filtering:false,
+                },
+                {
+                    title : "上线" ,name: "upper", type: "text", width: 50, validate : "required", editing : true, filtering:false,
+                },
+
+                {
+                    title : "钻石" ,name: "gem_coin", type: "number", width: 20,  editing : false ,filtering:false,
+                },
+                {
+                    title : "钻石总计" ,name: "all_gems", type: "number", width: 20,  editing : false, filtering: false,
+                },
+                {
+                    title : "可用" ,name: "enable", type: "checkbox", width: 20,  editing : true, filtering: false,
+                },
+                {
+                    title : "注册时间" ,name: "created_at", type: "text", width: 30, validate: "required",editing : false,filtering:false,
+                    itemTemplate : function(value, item) {
+                        return currentTime(value);
+                    }
+                },
+                {
+                    type: "control",
+                    deleteButton : false,
+                }
+            ],
+
+            onItemUpdated: function (grid) {
+                var item = grid.item;
+                api_request("user.update_dealer", item, function(ret) {
+                    if (ret.errcode == 0)
+                        alert("更新成功");
+                    else
+                        alert("更新失败");
+                });
+            },
+
+        });
+    }
+
+     $(document).ready(function(){
+
+         api_request("user.list_all_dealers", {}, function(ret) {
+             if ( ret.errcode == 0 )
+                 init_ui(ret.data);
+             else
+                alert("失败");
+         });
+     });
+
+    </script>
+
+</head>
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Admin Panel</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li><a href="main.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
+                    <li><a href="room.html"><i class="fa fa-tasks"></i> 房间和牌局设置</a></li>
+                    <li><a href="store.html"><i class="fa fa-globe"></i> 商 城 设 置</a></li>
+                    <li><a href="task.html"><i class="fa fa-list-ol"></i> 任 务 设 置</a></li>
+                    <li><a href="gift.html"><i class="fa fa-gift"></i> 奖品设置</a></li>
+                    <li><a href="settings.html"><i class="fa fa-table"></i> 系统公告和招商设置</a></li>
+                    <!--<li><a href="activity.html"><i class="fa fa-table"></i> 活动设置</a></li>--!>
+                    <li><a href="userconfig.html"><i class="fa fa-table"></i> 用户管理和设置</a></li>
+                    <li><a href="feedback.html"><i class="fa fa-table"></i> 留言和招商</a></li>
+                    <li><a href="query_deal.html"><i class="fa fa-table"></i>充值转账查询</a></li>
+                    <li class="active"><a href="dealer.html"><i class="fa fa-table"></i> 代理管理</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="page-wrapper">
+            所有玩家列表:<br/>
+            <table id="dealers_table" ></table>
+            <br/><br/>
+        </div>
+        <!-- /#page-wrapper -->
+    </div>
+    <!-- /#wrapper -->
+</body>
+</html>

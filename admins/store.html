@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商城设置</title>
+
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/local.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid.min.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid-theme.min.css" />
+
+    <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/jsgrid/jsgrid.js"></script>
+    <script type="text/javascript" src="js/jsgrid/i18n/jsgrid-zh-cn.js"></script>
+
+    <script type="text/javascript" src="js/client.js"></script>
+
+    <script type="text/javascript">
+
+    function init_ui(all_goods)
+    {
+        jsGrid.locale("zh-cn");
+        $("#goods_table").jsGrid({
+            width: "100%",
+            height: "800px",
+
+            inserting: true,
+            editing: true,
+            sorting: true,
+            paging: true,
+
+            data: all_goods,
+
+            fields: [
+                { title : "商品描述" ,name: "product_desc", type: "text", width: 80, validate : "required", editing : true },
+                {
+                    title : "图标" ,name: "logo", type: "text", width: 70,  editing : false ,
+                    itemTemplate : function(value,item){
+                        return '<img src=logos/gem.png></img>';
+                    },
+
+                    insertTemplate : function(){
+                        return '<img src=logos/gem.png></img>';
+                    },
+                    insertValue :function(){
+                        return null;
+                    }
+
+                },
+                { title : "价格(人民币/分)" ,name: "price", type: "number", width: 60, validate: "required" },
+                { title : "内容" ,name: "add_money_currency", type: "text", width: 50,  editing: false,
+                    itemTemplate : function(value,item){
+                        return '钻石';
+                    },
+                    insertTemplate : function(){
+                        return '钻石';
+                    },
+                    insertValue :function(){
+                        return null;
+                    }
+
+                },
+                { title : "数量" ,name: "quantity", type: "number", width: 40, validate: "required" },
+                {
+                    title : "代理商品" ,name: "dealer", type: "checkbox", width: 40, validate: "required", editing : false,
+                    insertTemplate : function(){
+                         var input = this.__proto__.insertTemplate.call(this);
+                         input.attr("checked", "checked");
+                         return input;
+                    }
+                },
+                {
+                    title : "是否启用" ,name: "enabled", type: "checkbox", width: 40, validate: "required", editing : true,
+                    insertTemplate : function(){
+                         var input = this.__proto__.insertTemplate.call(this);
+                         input.attr("checked", "checked");
+                         return input;
+                    }
+                },
+                {
+                    type: "control",
+                    deleteButton : true,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        $result = $result.add(this._createEditButton(item));
+                        return $result;
+                    }
+                }
+            ],
+
+            onItemUpdated: function (grid) {
+
+                var item = grid.item;
+                api_request("user.update_shopmall_config", item ,function(ret){
+                    if ( ret.errcode == 0 )
+                        alert("更新成功");
+                    else
+                        alert("更新失败");
+                });
+            },
+
+            onItemInserted : function(grid){
+                var item = grid.item;
+                api_request("user.add_shopmall_config", item ,function(ret){
+                    if ( ret.errcode == 0 )
+                        alert("添加成功");
+                    else
+                        alert("添加失败");
+                });
+            },
+
+        });
+    }
+
+
+     $(document).ready(function(){
+         api_request("user.list_goods_from_shop", {}, function(ret){
+             if ( ret.errcode == 0 )
+                init_ui(ret.data);
+            else {
+                alert("失败");
+            }
+         });
+     });
+
+    </script>
+
+</head>
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Admin Panel</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li><a href="main.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
+                    <li><a href="room.html"><i class="fa fa-tasks"></i> 房间和牌局设置</a></li>
+                    <li class="active"><a href="store.html"><i class="fa fa-globe"></i> 商 城 设 置</a></li>
+                    <li><a href="task.html"><i class="fa fa-list-ol"></i> 任 务 设 置</a></li>
+                    <li><a href="gift.html"><i class="fa fa-gift"></i> 奖品设置</a></li>
+                    <li><a href="settings.html"><i class="fa fa-table"></i> 系统公告和招商设置</a></li>
+                    <!--<li><a href="activity.html"><i class="fa fa-table"></i> 活动设置</a></li>--!>
+                    <li><a href="userconfig.html"><i class="fa fa-table"></i> 用户管理和设置</a></li>
+                    <li><a href="feedback.html"><i class="fa fa-table"></i> 留言和招商</a></li>
+                    <li><a href="query_deal.html"><i class="fa fa-table"></i>充值转账查询</a></li>
+                    <li><a href="dealer.html"><i class="fa fa-table"></i>代理查询</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="page-wrapper">
+            <table id="goods_table" ></table>
+        </div>
+        <!-- /#page-wrapper -->
+    </div>
+    <!-- /#wrapper -->
+</body>
+</html>

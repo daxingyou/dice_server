@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>充值转账查询</title>
+
+  <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" />
+  <link rel="stylesheet" type="text/css" href="css/local.css" />
+  <link type="text/css" rel="stylesheet" href="css/jsgrid.min.css" />
+  <link type="text/css" rel="stylesheet" href="css/jsgrid-theme.min.css" />
+  <link type="text/css" rel="stylesheet" href="css/jquery-ui.css" />
+
+
+
+  <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+  <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/jsgrid/jsgrid.js"></script>
+  <script type="text/javascript" src="js/jsgrid/i18n/jsgrid-zh-cn.js"></script>
+
+  <script type="text/javascript" src="js/jquery-ui.js"></script>
+
+
+
+  <script type="text/javascript" src="js/client.js"></script>
+
+  <script type="text/javascript">
+    function init_transfer_table(data , table_id)
+    {
+        $("#" + table_id).jsGrid({
+            width: "100%",
+            height: "500px",
+
+            inserting: false,
+            editing: false,
+            sorting: true,
+            paging: true,
+            pageSize : 10,
+            filtering: false,
+            autoload: true,
+
+            data: data,
+
+            fields: [
+                {
+                    title : "付款玩家ID" ,name: "user_id", type: "number", width: 30, editing : false,filtering : false
+                },
+                {
+                    title : "收款玩家ID" ,name: "to_uid", type: "number", width: 30, editing : false,filtering : false
+                },
+                {
+                    title : "钻石" ,name: "money", type: "number", width: 20,  editing : false ,filtering:false,
+                },
+                {
+                    title : "交易时间" ,name: "created_at", type: "text", width: 20,  editing : false ,filtering:false,
+                    itemTemplate : function(value,item){
+                        var d = new Date(value);
+                        return d.toLocaleString();
+                    }
+                },
+                {
+                    type: "control",
+                    deleteButton : false ,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        return $result;
+                    }
+                }
+            ]
+        });
+
+    }
+
+    function init_deposit_table(data, table_id)
+    {
+        $("#" + table_id).jsGrid({
+            width: "100%",
+            height: "500px",
+
+            inserting: false,
+            editing: false,
+            sorting: true,
+            paging: true,
+            pageSize : 10,
+            filtering: false,
+            autoload: true,
+
+            data: data,
+
+            fields: [
+                {
+                    title : "玩家ID" ,name: "user_id", type: "number", width: 30, editing : false,filtering : false
+                },
+                {
+                    title : "商品描述" ,name: "shopmall_desc", type: "text", width: 30, editing : false,filtering : false
+                },
+                {
+                    title : "游戏币" ,name: "currency", type: "text", width: 20,  editing : false ,filtering:false,
+                    itemTemplate : function(value,item){
+                        if (value == "gem")
+                            return "钻石";
+                        else if (value == "gold")
+                            return "金币";
+                        else if (value == "lottery")
+                            return "奖券";
+                        else {
+                            return value;
+                        }
+                    }
+                },
+                {
+                    title : "数量" ,name: "quantity", type: "text", width: 20,  editing : false ,filtering:false,
+                },
+                {
+                    title : "交易时间" ,name: "created_at", type: "text", width: 20,  editing : false ,filtering:false,
+                    itemTemplate : function(value,item){
+                        var d = new Date(value);
+                        return d.toLocaleString();
+                    }
+                },
+                {
+                    type: "control",
+                    deleteButton : false ,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        return $result;
+                    }
+                }
+            ]
+        });
+    }
+
+    function init_cost_stat_table(data, table_id)
+    {
+        $("#" + table_id).jsGrid({
+            width: "100%",
+            height: "500px",
+
+            inserting: false,
+            editing: false,
+            sorting: true,
+            paging: true,
+            pageSize : 10,
+            filtering: false,
+            autoload: true,
+
+            data: data,
+
+            fields: [
+                {
+                    title : "时段", name: "range", type: "text", width: 30, editing : false, filtering : false
+                },
+                {
+                    title : "总局数", name: "quantity", type: "number", width: 30, editing : false,filtering : false
+                },
+                {
+                    type: "control",
+                    deleteButton : false ,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        return $result;
+                    }
+                }
+            ]
+        });
+    }
+
+    function init_deposit_stat_table(data, table_id)
+    {
+        $("#" + table_id).jsGrid({
+            width: "100%",
+            height: "500px",
+
+            inserting: false,
+            editing: false,
+            sorting: true,
+            paging: true,
+            pageSize : 10,
+            filtering: false,
+            autoload: true,
+
+            data: data,
+
+            fields: [
+                {
+                    title : "时段", name: "range", type: "text", width: 30, editing : false, filtering : false
+                },
+                {
+                    title : "充值金额", name: "money", type: "number", width: 30, editing : false,filtering : false
+                },
+                {
+                    title : "购钻数量", name: "quantity", type: "number", width: 30, editing : false,filtering : false
+                },
+                {
+                    type: "control",
+                    deleteButton : false ,
+                    itemTemplate: function(value, item) {
+                        var $result = $([]);
+                        return $result;
+                    }
+                }
+            ]
+        });
+    }
+
+
+    $(document).ready(function(){
+       $("#tabs").tabs();
+
+        $("#btn_query_all").on('click', function(){
+            var type = $("#query_all_type").val();
+            api_request("user.query_transfer_deal", { type : type }, function(ret){
+                if ( ret.errcode == 0 )
+                {
+                     if ( type == "transfer" )
+                        init_transfer_table(ret.data, "all_table");
+                     else
+                        init_deposit_table(ret.data, "all_table");
+                }
+               else {
+                   alert("失败");
+               }
+            });
+        });
+
+       $("#btn_query_user").on('click', function(){
+          var type = $("#query_user_type").val();
+          var uid = parseInt($("#user_id").val());
+          api_request("user.query_transfer_deal", { type : type, uid : uid }, function(ret){
+              if ( ret.errcode == 0 )
+              {
+                  if ( type == "transfer" )
+                     init_transfer_table(ret.data, "user_table");
+                  else
+                     init_deposit_table(ret.data, "user_table");
+             }
+             else {
+                 alert("失败");
+             }
+          });
+      });
+
+      $("#btn_query_stat").on('click', function(){
+          var type = $("#query_stat_type").val();
+          var range = $("#query_range_type").val();
+          api_request("user.query_stat", { type : type, range : range }, function(ret) {
+              if (ret.errcode == 0) {
+                  if (type == "cost")
+                     init_cost_stat_table(ret.data, "stat_table");
+                  else
+                     init_deposit_stat_table(ret.data, "stat_table");
+             }
+             else {
+                 alert("失败");
+             }
+          });
+      });
+
+  });
+  </script>
+
+  <style>
+    table {
+      text-align: center;
+    }
+
+    th {
+      text-align: center;
+    }
+
+    .form-group {
+      margin-left: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="wrapper">
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+        <a class="navbar-brand" href="main.html">Admin Panel</a>
+      </div>
+      <div class="collapse navbar-collapse navbar-ex1-collapse">
+        <ul class="nav navbar-nav side-nav">
+          <li><a href="index.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
+          <li><a href="room.html"><i class="fa fa-tasks"></i> 房间和牌局设置</a></li>
+          <li><a href="store.html"><i class="fa fa-globe"></i> 商 城 设 置</a></li>
+          <li><a href="task.html"><i class="fa fa-list-ol"></i> 任 务 设 置</a></li>
+          <li><a href="gift.html"><i class="fa fa-gift"></i> 奖品设置</a></li>
+          <li><a href="settings.html"><i class="fa fa-table"></i> 系统公告和招商设置</a></li>
+          <!--<li><a href="activity.html"><i class="fa fa-table"></i> 活动设置</a></li>--!>
+          <li><a href="userconfig.html"><i class="fa fa-table"></i> 用户管理和设置</a></li>
+          <li><a href="feedback.html"><i class="fa fa-table"></i> 留言和招商</a></li>
+          <li  class="active"><a href="query_deal.html"><i class="fa fa-table"></i>充值转账查询</a></li>
+          <li><a href="dealer.html"><i class="fa fa-table"></i>代理查询</a></li>
+        </ul>
+      </div>
+    </nav>
+
+
+    <div id="tabs">
+      <ul>
+        <li><a href="#tabs-1">全部数据查询</a></li>
+        <li><a href="#tabs-2">单个玩家查询</a></li>
+        <li><a href="#tabs-3">分段统计</a></li>
+      </ul>
+      <div id="tabs-1">
+          查询内容:
+          <select id='query_all_type'>
+              <option value="deposit">充值记录查询</option>
+              <option value="transfer">转账记录查询</option>
+          </select>
+          <input type=button value='确定' id='btn_query_all' />
+          <br/>
+           <table id="all_table"></table>
+      </div>
+
+      <div id="tabs-2">
+          查询内容:
+          <select id='query_user_type'>
+              <option value="deposit">充值记录查询</option>
+              <option value="transfer">转账记录查询</option>
+          </select>
+          <br/>
+          玩家ID: <input type=text value='' id='user_id' /><br/>
+          <input type=button value='确定' id='btn_query_user' /><br/>
+           <table id="user_table"></table>
+      </div>
+
+      <div id="tabs-3">
+          查询内容:
+          <select id='query_stat_type'>
+              <option value="cost">耗卡记录</option>
+              <option value="deposit">充值记录</option>
+          </select>
+
+          <select id='query_range_type'>
+              <option value="daily">按天统计</option>
+              <option value="monthly">按月统计</option>
+          </select>
+
+          <br/>
+          <input type=button value='确定' id='btn_query_stat' /><br/>
+          <table id="stat_table"></table>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+
+</html>
+

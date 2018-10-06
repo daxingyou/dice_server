@@ -1,0 +1,679 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动设置</title>
+
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/local.css" />
+    <link rel="stylesheet" type="text/css" href="jui/jquery-ui.min.css">
+    <link type="text/css" rel="stylesheet" href="css/jsgrid.min.css" />
+    <link type="text/css" rel="stylesheet" href="css/jsgrid-theme.min.css" />
+
+    <script type="text/javascript" src="js/jquery-1.12.4.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="jui/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/jsgrid/jsgrid.js"></script>
+    <script type="text/javascript" src="js/jsgrid/i18n/jsgrid-zh-cn.js"></script>
+
+    <script type="text/javascript" src="js/client.js"></script>
+
+
+    <script type="text/javascript">
+
+    var _createTextBox =  function() {
+        return $("<input>").attr("type", "text");
+    };
+
+    var descs = {
+        name : "活动标题",
+        desc : "活动内容",
+        ticket_fee : "报名费",
+        everyday_open : "每天都开放",
+        start_date : "开始日期",
+        end_date : "结束日期",
+        start_time : "每天开始时间",
+        end_time : "每天结束时间",
+
+        prize : "一二三名奖品",
+        registration_time : "报名时间(分钟)",
+        max_players : "最大人数",
+        max_times : "一天内的活动次数",
+        default_score : "初始分数",
+        num_of_round : "最大多少轮",
+        num_of_games :"每轮几局麻将",
+        knocked_out : "每轮淘汰人数",
+    }
+
+
+    var prize_callback = {
+
+        dialog_handler : null,
+
+        editControl : null,
+
+        content : null,
+
+        open_dialog : function(){
+            var self = this;
+
+            if ( this.dialog_handler != null )
+            {
+                this.dialog_handler.dialog( "open" );
+                return this.dialog_handler;
+            }
+
+            this.dialog_handler = $( "#dialog_prize" ).dialog({
+                autoOpen: false,
+                height: 400,
+                width: 350,
+                modal: true,
+                closeText : "Close",
+                buttons: {
+                    "确认": function(){
+                        var gem_amount = parseInt($(this).find("[name=gem]").val() );
+                        var gold_amount = parseInt($(this).find("[name=gold]").val());
+                        var lottery_amount = parseInt($(this).find("[name=lottery]").val());
+
+                        var select_val = parseInt( $(this).find("select").val() );
+                        self.editControl[select_val] = [];
+                        if ( gem_amount > 0 )
+                            self.editControl[select_val].push({
+                                currency : "gem",
+                                amount : gem_amount,
+                                desc : "钻石",
+                                logo : "local://gem",
+                            });
+                        if ( gold_amount > 0)
+                            self.editControl[select_val].push({
+                                currency : "gold",
+                                amount : gold_amount,
+                                desc : "金币",
+                                logo : "local://gold",
+                            });
+                        if ( lottery_amount > 0)
+                            self.editControl[select_val].push({
+                                currency : "lottery",
+                                amount : lottery_amount,
+                                desc : "奖券",
+                                logo : "local://lottery",
+                            });
+
+                        var other_name = $.trim($(this).find("[name=other_desc]").val());
+                        var other_amount = $.trim($(this).find("[name=other_amount]").val());
+                        var other_logo = $.trim($(this).find("[name=other_logo]").val());
+                        other_amount = parseInt(other_amount);
+                        console.log("all111");
+                        if ( other_name.length > 0 && other_logo.length > 0 && other_amount > 0 )
+                        {
+                            self.editControl[select_val].push({
+                                currency : null,
+                                desc : other_name,
+                                amount : other_amount,
+                                logo : other_logo,
+                            });
+                            console.log(self.editControl);
+                        }
+
+                        $("#activity_table").jsGrid("updateItem");
+                        self.dialog_handler.dialog("close");
+                    },
+                    "取消": function() {
+                        self.dialog_handler.dialog("close");
+                    }
+                },
+                close: function() {
+                    $("#activity_table").jsGrid("cancelEdit");
+                }
+            });
+            return this.dialog_handler;
+        },
+
+        itemTemplate : function(value,item) {
+            console.log(value);
+            this.editControl = value;
+            var self = this;
+            var set_ui = function(n){
+                var datas = self.editControl[n];
+                $("#dialog_prize").find("input").val("");
+                for ( var k = 0; k < datas.length ; k++ )
+                {
+                    var data = datas[k];
+                    if ( data.currency == "gem")
+                    {
+                        $("#dialog_prize").find("[name=gem]").val(data.amount);
+                    } else if ( data.currency == "gold")
+                    {
+                        $("#dialog_prize").find("[name=gold]").val(data.amount);
+                    } else if ( data.currency == "lottery")
+                    {
+                        $("#dialog_prize").find("[name=lottery]").val(data.amount);
+                    } else if ( data.currency == null)
+                    {
+                        $("#dialog_prize").find("[name=other_desc]").val(data.desc);
+                        $("#dialog_prize").find("[name=other_logo]").val(data.logo);
+                        $("#dialog_prize").find("[name=other_amount]").val(data.amount);
+                    }
+                }
+            };
+
+            $("#dialog_prize").find("select").on("change",function(){
+                var n = $(this).val();
+                set_ui(n);
+            });
+
+            set_ui(0);
+            var texts = ["第一名","第二名","第三名"];
+            for ( var n = 0; n < value.length; n++ )
+            {
+                var datas = value[n];
+                texts[n] += ": ";
+                for ( var k = 0; k < datas.length ; k++ )
+                {
+                    var data = datas[k];
+                    if ( data.currency == "gem")
+                    {
+                        texts[n] += "钻石" + data.amount + "个, ";
+                    } else if ( data.currency == "gold")
+                    {
+                        texts[n] += "金币" + data.amount + "个, ";
+                    } else if ( data.currency == "lottery")
+                    {
+                        texts[n] += "奖券" + data.amount + "个, ";
+                    } else if ( data.currency == null)
+                    {
+                        texts[n] += data.desc + " " + data.amount + "个, ";
+                    }
+                }
+            }
+            this.content =  texts.join("<br/>");
+            return this.content;
+        },
+
+        editTemplate : function(value,item){
+            this.open_dialog().dialog( "open" );
+            return this.content;
+        },
+
+        editValue : function(){
+            return this.editControl;
+        },
+    };
+
+    var text_callback = {
+
+        editTemplate : function(value,item){
+            var $result = this.editControl = _createTextBox();
+            $result.val(value);
+            return $result;
+        },
+
+        editValue : function(){
+            return this.editControl.val();
+        },
+    }
+
+    var ticket_fee_callback = {
+
+        dialog_handler : null,
+
+        editControl : null,
+
+        open_dialog : function(){
+            var self = this;
+
+            if ( this.dialog_handler != null )
+            {
+                console.log("open again");
+                this.dialog_handler.dialog( "open" );
+                return this.dialog_handler;
+            }
+
+            this.dialog_handler = $( "#dialog_ticket_fee" ).dialog({
+                autoOpen: false,
+                height: 400,
+                width: 350,
+                modal: true,
+                closeText : "Close",
+                buttons: {
+                    "确认": function(){
+                        var gem_amount = $(this).find("[name=gem]").val();
+                        var gold_amount = $(this).find("[name=gold]").val();
+                        var lottery_amount = $(this).find("[name=lottery]").val();
+                        self.editControl = [
+                            {
+                                currency : "gem",
+                                amount : parseInt(gem_amount),
+                            },
+                            {
+                                currency : "gold",
+                                amount : parseInt(gold_amount),
+                            },
+                            {
+                                currency : "lottery",
+                                amount : parseInt(lottery_amount),
+                            }
+                        ];
+                        $("#activity_table").jsGrid("updateItem");
+                        self.dialog_handler.dialog("close");
+                    },
+                    "取消": function() {
+                        self.dialog_handler.dialog("close");
+                    }
+                },
+                close: function() {
+                    $("#activity_table").jsGrid("cancelEdit");
+                }
+            });
+            return this.dialog_handler;
+        },
+
+        itemTemplate : function(value,item) {
+            var content = "";
+            for(var n = 0; n < value.length ; n++)
+            {
+                var data = value[n];
+                if ( data.currency == "gem")
+                {
+                    content += "钻石" + data.amount + "个, ";
+                    $("#dialog_ticket_fee").find("[name=gem]").val(data.amount);
+                } else if ( data.currency == "gold")
+                {
+                    content += "金币" + data.amount + "个, ";
+                    $("#dialog_ticket_fee").find("[name=gold]").val(data.amount);
+                } else if ( data.currency == "lottery")
+                {
+                    content += "奖券" + data.amount + "个, ";
+                    $("#dialog_ticket_fee").find("[name=lottery]").val(data.amount);
+                }
+            }
+            this.content = content;
+            return content;
+        },
+
+        editTemplate : function(value,item){
+            this.open_dialog().dialog( "open" );
+            return this.content;
+        },
+
+        editValue : function(){
+            return this.editControl;
+        },
+    };
+
+    var everyday_open_callback = {
+
+        _createCheckbox: function() {
+            return $("<input>").attr("type", "checkbox");
+        },
+
+        itemTemplate: function(value) {
+            return this._createCheckbox().prop({
+                checked: value,
+                disabled: true
+            });
+        },
+
+        editTemplate: function(value) {
+            var $result = this.editControl = this._createCheckbox();
+            $result.prop("checked", value);
+            return $result;
+        },
+
+        editValue: function() {
+            return this.editControl.is(":checked");
+        },
+    };
+
+    var date_callback = {
+
+        itemTemplate: function(value) {
+            var d = new Date(value);
+            var year = d.getFullYear();
+            var month = d.getMonth() + 1 ;
+            var mday = d.getDate();
+            return year + "年" + month + "月" + mday + "日";
+        },
+
+        editTemplate: function(value) {
+
+            $.datepicker.regional["zh-CN"] = {
+            	closeText: "關閉",
+            	prevText: "&#x3C;上月",
+            	nextText: "下月&#x3E;",
+            	currentText: "今天",
+            	monthNames: [ "一月","二月","三月","四月","五月","六月",
+            	"七月","八月","九月","十月","十一月","十二月" ],
+            	monthNamesShort: [ "一月","二月","三月","四月","五月","六月",
+            	"七月","八月","九月","十月","十一月","十二月" ],
+            	dayNames: [ "星期日","星期一","星期二","星期三","星期四","星期五","星期六" ],
+            	dayNamesShort: [ "周日","周一","周二","周三","周四","周五","周六" ],
+            	dayNamesMin: [ "日","一","二","三","四","五","六" ],
+            	weekHeader: "周",
+            	dateFormat: "yy/mm/dd",
+            	firstDay: 1,
+            	isRTL: false,
+            	showMonthAfterYear: true,
+            	yearSuffix: "年"
+            };
+
+            var foo = $("<input>").datepicker( $.datepicker.regional[ "zh-CN" ]);
+            return this._editPicker = foo.datepicker("setDate", new Date(value));
+        },
+
+        editValue: function() {
+            return this._editPicker.datepicker("getDate").toISOString();
+        }
+
+    };
+
+    var time_callback = {
+
+        itemTemplate: function(value) {
+            return value[0] + "点" + value[1] + "分";
+        },
+
+        editTemplate: function(value) {
+            var foo = '<div><input type="number" name="hour" min=0 max=23 /> 时<input type="number" name="minute" min=0 max=59 /> 分 </div>';
+            this.editControl = $(foo);
+            console.log(value);
+            this.editControl.find("[name=hour]").val(value[0]);
+            this.editControl.find("[name=minute]").val(value[1]);
+            return this.editControl;
+        },
+
+        editValue : function() {
+            var hour = this.editControl.find("[name=hour]").val();
+            var minute = this.editControl.find("[name=minute]").val();
+            return [ parseInt(hour), parseInt(minute)];
+        },
+    };
+
+    var number_callback = {
+
+        itemTemplate: function(value) {
+            return value;
+        },
+
+        editTemplate: function(value) {
+            var dom = $('<div><input type="number" name="data" /></div>');
+            dom.find("input").val(value);
+            this.editControl = dom;
+            return this.editControl;
+        },
+
+        editValue : function() {
+            var n = this.editControl.find("input").val();
+            console.log(n);
+            return parseInt(n);
+        },
+    };
+
+    var knocked_out_callback = {
+
+        itemTemplate: function(value) {
+            return value.toString();
+        },
+
+        editTemplate: function(value) {
+            var dom = $('<div><input type="text" name="data" /></div>');
+            dom.find("input").val(value);
+            this.editControl = dom;
+            return this.editControl;
+        },
+
+        editValue : function() {
+            var v = this.editControl.find("input").val();
+            var vs = $.trim(v).split(",");
+            var ret = vs.map(function(n){
+                return parseInt(n);
+            });
+            return $.trim(v);
+        },
+    };
+
+    var callbacks = {
+        prize : prize_callback,
+        name : text_callback,
+        desc : text_callback,
+        ticket_fee : ticket_fee_callback,
+        everyday_open : everyday_open_callback,
+        start_date : date_callback,
+        end_date : date_callback,
+        start_time : time_callback,
+        end_time : time_callback,
+        registration_time : number_callback,
+        max_players : number_callback,
+        max_times : number_callback , //最大活动场次
+        default_score : number_callback , //默认分数
+        num_of_round : number_callback,  //一次活动有多少轮
+        num_of_games : number_callback,  //一轮有多少局
+        knocked_out : knocked_out_callback
+    }
+
+
+    var MyDateField = function(config) {
+        //console.log(config);
+        jsGrid.Field.call(this, config);
+    };
+
+    MyDateField.prototype = new jsGrid.Field({
+
+        itemTemplate: function(value,item) {
+            var ret = "";
+            if ( callbacks[item.name] && callbacks[item.name].itemTemplate )
+                ret =  callbacks[item.name].itemTemplate(value,item);
+            else
+                ret = value.toString();
+            return ret;
+        },
+
+        editTemplate : function(value,item) {
+            this.config_key = item.name;
+            var ret = "";
+            if ( callbacks[item.name] && callbacks[item.name].editTemplate )
+                ret =  callbacks[item.name].editTemplate(value,item);
+            else
+                ret = value.toString();
+            return ret;
+        },
+
+        editValue : function() {
+            var ret = "";
+            if ( callbacks[this.config_key] && callbacks[this.config_key].editValue )
+                ret =  callbacks[this.config_key].editValue();
+            else
+                ret = null;
+            return ret;
+        },
+
+    });
+
+    jsGrid.fields.myDateField = MyDateField;
+
+    var Grid = null;
+    function init_ui(data)
+    {
+        var val = JSON.parse(data.value);
+        var configs = [];
+        for( var key in descs )
+        {
+            configs.push({
+                name : key,
+                desc : descs[key],
+                value : val[key],
+            })
+        }
+
+        Grid = $("#activity_table").jsGrid({
+            width: "100%",
+            height: "400px",
+
+            inserting: false,
+            editing: true,
+            sorting: false,
+            paging: false,
+
+            data: configs,
+
+            fields: [
+                {
+                    title : "参数" ,name: "desc", type: "text", width: 30, editing : false
+                },
+                {
+                    title : "内容" ,name: "value", type: "myDateField", width: 80, validate : "required", editing : true
+                },
+                {
+                    type: "control",
+                    editButton: false,
+                    deleteButton : false,
+                }
+            ],
+
+            rowClick : function(data){
+                var item = data.item;
+                $("#activity_table").jsGrid("editItem", item);
+                return;
+            },
+
+            onItemUpdating: function(args,item) {
+                //console.log("onItemUpdating");
+                console.log(args);
+                if ( args.item.name == "knocked_out")
+                {
+                    var vs = args.item.value.split(",");
+                    var ret = vs.map(function(n){
+                        return parseInt(n);
+                    });
+                    args.item.value = ret;
+                }
+                api_request("user.update_activity_configs", { key : args.item.name , value : args.item.value }, function(ret){
+                    if ( ret.errcode == 0 )
+                        alert("修改参数成功");
+                    else
+                        alert("修改参数失败");
+                });
+            },
+
+        });
+
+    }
+
+
+      $(document).ready(function(){
+          api_request("user.list_activity_configs", {}, function(ret){
+              if ( ret.errcode == 0 )
+                 init_ui(ret.data);
+             else {
+                 alert("失败");
+             }
+          });
+      });
+
+    </script>
+</head>
+<body>
+<div id="wrapper">
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html">Admin Panel</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav side-nav">
+                    <li><a href="main.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
+                    <li><a href="room.html"><i class="fa fa-tasks"></i> 房间和牌局设置</a></li>
+                    <li><a href="store.html"><i class="fa fa-globe"></i> 商 城 设 置</a></li>
+                    <li><a href="task.html"><i class="fa fa-list-ol"></i> 任 务 设 置</a></li>
+                    <li><a href="gift.html"><i class="fa fa-gift"></i> 奖品设置</a></li>
+                    <li><a href="settings.html"><i class="fa fa-gift"></i> 系统公告和招商设置</a></li>
+                    <li class="active"><a href="activity.html"><i class="fa fa-table"></i> 活动设置</a></li>
+                    <li><a href="userconfig.html"><i class="fa fa-table"></i> 用户管理和设置</a></li>
+
+                </ul>
+            </div>
+        </nav>
+       <div id="page-wrapper">
+           <table id="activity_table" ></table>
+
+      </div>
+
+</div>
+
+<div id="dialog_ticket_fee" title="报名费">
+
+  <form>
+    <fieldset>
+      <label >钻石</label>
+      <input type="text" name="gem" value="1" class="text ui-widget-content ui-corner-all">
+      <br/>
+      <label >金币</label>
+      <input type="text" name="gold" value="0" class="text ui-widget-content ui-corner-all">
+      <br/>
+      <label >奖券</label>
+      <input type="text" name="lottery"  value="0" class="text ui-widget-content ui-corner-all">
+      <br/>
+
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
+</div>
+
+<div id="dialog_prize" title="奖品设置">
+
+  <form>
+      <select>
+          <option value=0>第一名</option>
+          <option value=1>第二名</option>
+          <option value=2>第三名</option>
+      </select>
+      <br/>
+
+    <fieldset>
+      <label >钻石</label>
+      <input type="text" name="gem" value="0" class="text ui-widget-content ui-corner-all">
+      <br/>
+      <label >金币</label>
+      <input type="text" name="gold" value="0" class="text ui-widget-content ui-corner-all">
+      <br/>
+      <label >奖券</label>
+      <input type="text" name="lottery"  value="0" class="text ui-widget-content ui-corner-all">
+      <br/>
+      <label >实物奖品</label><br/>
+      实物名称:<input type="text" name="other_desc"  value="" class="text ui-widget-content ui-corner-all"><br/>
+      实物数量:<input type="text" name="other_amount"  value="" class="text ui-widget-content ui-corner-all"><br/>
+      实物图标:<input type="text" name="other_logo"  value="" class="text ui-widget-content ui-corner-all"><br/>
+      <br/>
+
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
+</div>
+
+<div id="dialog_knock_out" title="奖品设置">
+
+  <form>
+
+    <fieldset>
+      <label >钻石</label>
+      <input type="text" name="gem" value="0" class="text ui-widget-content ui-corner-all">
+      <br/>
+
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+    </fieldset>
+<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+  </form>
+</div>
+
+</body>
+</html>

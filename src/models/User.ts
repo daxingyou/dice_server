@@ -1,6 +1,6 @@
 
 import { Model, Table, Column, HasMany } from 'sequelize-typescript'
-import UserLog from './UserLog';
+import GameLog from './GameLog';
 
 @Table({
 	tableName : 'user'
@@ -73,6 +73,12 @@ export default class User extends Model<User> {
 
 	@Column
 	wechat : string;
+
+    @Column
+    last_login : Date;
+
+    @HasMany(() => GameLog)
+    game_logs : GameLog[];
 }
 
 

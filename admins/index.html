@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Login Form</title>
+<meta charset="UTF-8" />
+<link rel="stylesheet" type="text/css" href="css/reset.css">
+<link rel="stylesheet" type="text/css" href="css/structure.css">
+<script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="js/client.js"></script>
+</head>
+
+<body>
+<form class="box login">
+	<fieldset class="boxBody">
+	  <label>Username</label>
+	  <input type="text" id="username" tabindex="1" placeholder="" required>
+	  <label>Password</label>
+	  <input type="password" id="password" tabindex="2" required>
+	</fieldset>
+	<footer>
+	  <!--<label><input type="checkbox" tabindex="3">Keep me logged in</label> -->
+	  <input type="button" class="btnLogin" value="Login" tabindex="4">
+	</footer>
+</form>
+<footer id="main">
+</footer>
+<script>
+	$(".btnLogin").click(function(){
+
+		api_request("login" , {username : $("#username").val(), password : $("#password").val() }, function(ret){
+			if ( ret.errcode == RETCODE.OK )
+				window.location.href = "main.html";
+			else
+				alert("登陆失败");
+		})
+	})
+</script>
+</body>
+</html>
