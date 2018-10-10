@@ -20,6 +20,7 @@
     "http-errors": "~1.6.2",
     "morgan": "~1.9.0",
     "mysql2": "^1.6.1",
+    "redis-typescript": "^0.1.2",
     "reflect-metadata": "^0.1.12",
     "sequelize": "^4.38.0",
     "sequelize-typescript": "^0.6.6",

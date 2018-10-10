@@ -31,6 +31,24 @@ export function createUser(param : CreateUserParams) {
 	});
 }
 
+export function setup(uid : number, nickname: string, avatar : string) {
+    return User.update({
+        nickname : nickname,
+        avatar : avatar,
+    }, { where : { id : uid } });
+}
+
+export function login(uid : number) {
+    return User.update({
+        last_login : Date.now(), is_login : true
+    }, { where : { id : uid } });
+}
+
+export function logout(uid : number) {
+    return User.update({
+        is_login : false
+    }, { where : { id : uid } });
+}
 
 export function addMoney(uid : number, score : number) {
     let opt : any = { id : uid };
@@ -46,8 +64,10 @@ export function addMoney(uid : number, score : number) {
 		{ where : opt }
 	)
     .then(x => {
-        if (x[0] !== 1)
+        if (x[0] !== 1) {
+            console.log('uid: ' + uid + ' score: ' + score);
             return Promise.reject('余额不足');
+        }
 
         return Promise.resolve(true);
     });
@@ -121,7 +141,8 @@ export function transfer(uid : number, to : string, amount : number) {
 			account = u.account;
 
 			return User.update({
-				balance : sequelize.literal('balance - ' + amount)
+				balance : sequelize.literal('balance - ' + amount),
+                total_withdraw : sequelize.literal('total_withdraw + ' + amount)
 			}, { where : { id : uid, balance : { $gte : amount } }, transaction : t });
 		})
 		.then(x => {
@@ -129,7 +150,8 @@ export function transfer(uid : number, to : string, amount : number) {
 				return Promise.reject('转账失败，可能是金额不足');
 
 			return User.update({
-				balance : sequelize.literal('balance + ' + amount)
+				balance : sequelize.literal('balance + ' + amount),
+                total_recharge : sequelize.literal('total_recharge + ' + amount)
 			}, { where : { account : to }, transaction : t });
 		})
 		.then(x => {

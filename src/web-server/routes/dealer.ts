@@ -21,6 +21,8 @@ router.post('/:method', (req: any, res: any, next: any) => {
 		return;
 	}
 
+    console.log('action=' + action);
+
     cb(body)
     .then((ret : any) => {
         write_response(res, ret);

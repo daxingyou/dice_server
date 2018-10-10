@@ -82,10 +82,13 @@
                     title : "昵称" ,name: "nickname", type: "text", width: 30, validate : "required", editing : false, filtering: false,
                 },
                 {
+                    title : "密码" ,name: "password", type: "text", width: 30, validate : "required", editing : true, filtering: false,
+                },
+                {
                     title : "电话" ,name: "phone", type: "text", width: 30, validate : "required", editing : false, filtering: false,
                 },
                 {
-                    title : "微信" ,name: "wechat", type: "text", width: 30, validate : "required", editing : false, filtering: false,
+                    title : "微信" ,name: "wechat", type: "text", width: 30, editing : true, filtering: false,
                 },
                 {
                     title : "余额" ,name: "balance", type: "number", width: 30,  editing : true, filtering: false,
@@ -163,6 +166,7 @@
                 <ul class="nav navbar-nav side-nav">
                     <li><a href="main.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
                     <li class="active"><a href="userconfig.html"><i class="fa fa-table"></i> 玩家管理</a></li>
+                    <li><a href="room.html"><i class="fa fa-table"></i>房间查询</a></li>
                     <li><a href="record.html"><i class="fa fa-table"></i>游戏记录查询</a></li>
                 </ul>
             </div>

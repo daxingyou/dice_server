@@ -109,16 +109,19 @@
                     }
                 },
                 {
-                    title : "下注金额", name: "amount", type: "number", width: 30, editing : false, filtering : false
+                    title : "下注金额", name: "amount", type: "text", width: 30, editing : false, filtering : false
                 },
                 {
-                    title : "结算金额", name: "result", type: "number", width: 30, editing : false, filtering : false
+                    title : "结算金额", name: "result", type: "text", width: 30, editing : false, filtering : false
                 },
                 {
-                    title : "房间号" ,name: "room_id", type: "number", width: 20,  editing : false ,filtering:false,
+                    title : "房间号" ,name: "room_id", type: "text", width: 20,  editing : false ,filtering:false,
                 },
                 {
-                    title : "期号" , name: "round", type: "number", width: 20,  editing : false, filtering: false,
+                    title : "期号" , name: "round", type: "text", width: 20,  editing : false, filtering: false,
+                },
+                {
+                    title : "描述" , name: "desc", type: "text", width: 20, editing : false, filtering: false,
                 },
                 {
                     title : "结果", name: "game_result", type: "text", width: 30,  editing : false, filtering: false,
@@ -212,6 +215,7 @@
         <ul class="nav navbar-nav side-nav">
           <li><a href="index.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
           <li><a href="userconfig.html"><i class="fa fa-table"></i> 玩家管理</a></li>
+          <li><a href="room.html"><i class="fa fa-table"></i>房间管理</a></li>
           <li  class="active"><a href="record.html"><i class="fa fa-table"></i>游戏记录查询</a></li>
         </ul>
       </div>

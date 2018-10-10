@@ -28,5 +28,23 @@ export default class Room extends Model<Room> {
 		allowNull : false
 	})
 	enabled : boolean;
+
+    @Column({
+        defaultValue : 0,
+        allowNull : false
+    })
+    balance : number;
+
+    @Column({
+        defaultValue : 1,
+        allowNull : false
+    })
+    round : number;
+
+    @Column({
+        defaultValue : 0,
+        allowNull : false
+    })
+    tax : number;
 }
 

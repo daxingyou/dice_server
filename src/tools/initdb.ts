@@ -7,22 +7,13 @@ const models = sequelize.models;
 sequelize.sync({ force : true })
 .then(() => {
 	return models['User'].create({
-		account : '19106276',
-		password : '96e79218965eb72c92a549dd5a330112',
-		nickname : '茅十八',
-		phone : '13485492845',
-		balance : 99923893
-	});
-})
-.then(() => {
-	return models['User'].create({
-        account : '07559576',
-        password : '96e79218965eb72c92a549dd5a330112',
-        nickname : '888娱乐城微信',
-        phone : '13485492845',
-        balance : 99923334,
+        account : '100001',
+        password : 'beeef10d70fa32ae25ea739740d19cd0',
+        nickname : '888娱乐城',
+        phone : '',
+        balance : 0,
 		is_agent : true,
-		wechat : '986539376'
+		wechat : ''
 	});
 })
 .then(() => {

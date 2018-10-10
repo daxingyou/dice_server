@@ -96,7 +96,7 @@ export function list_top_players() {
     ];
 
     return new sequelize.Promise((resolve : any, reject : any) => {
-        return resolve({ code : 0, data : data });
+        return resolve({ code : 0, data : [] });
     });
 }
 

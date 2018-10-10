@@ -24,6 +24,9 @@ export default class GameLog extends Model<GameLog> {
     })
     result : number;
 
+    @Column
+    desc : string;
+
     @ForeignKey(() => User)
     @Column
     user_id : number;

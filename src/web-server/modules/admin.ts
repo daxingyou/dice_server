@@ -1,11 +1,15 @@
 
+import md5 from '../../utils/md5';
 import * as crypto from 'crypto';
 import dao from '../../dao';
+import redis from '../../utils/redis';
 
 const adminDao = dao['AdminDao'];
 const userDao = dao['UserDao'];
-const Promise = dao.sequelize.Promise;
-const models = dao.sequelize.models;
+const roomDao = dao['RoomDao'];
+const sequelize = dao.sequelize;
+const Promise = sequelize.Promise;
+const models = sequelize.models;
 
 interface LoginParam {
     username : string;
@@ -30,23 +34,86 @@ export function logout(data : any) {
     });
 }
 
+interface passwdParam {
+    password : string;
+}
+
+export function passwd(param : passwdParam) {
+    let pass = crypto.createHash('sha1').update(param.password).digest('hex');
+
+    console.log('password: ' + param.password);
+
+    return adminDao.passwd(pass)
+    .then(() => {
+        console.log('passwd done');
+        return { errcode : 0 };
+    })
+    .catch((err : any) => {
+        console.log('passwd err=' + err);
+        return { errcode : 500, errmsg : '修改失败' };
+    });
+}
+
 export function list_all_user() {
     return userDao.listAllUser()
     .then((us : any[]) => {
-        console.log('us.length: ' + us.length);
-
         return {
             users : us.map(u=>u.dataValues)
         };
     });
 }
 
+export function list_all_room() {
+    return roomDao.list_rooms()
+    .then((rs : any[]) => {
+        return {
+            rooms : rs.map(r => r.dataValues)
+        };
+    });
+}
+
 export function update_user_info(data : any) {
-    return models['User'].update({
-        is_agent : data.is_agent,
-        balance : data.balance
-    }, {
-        where : { id : data.id }
+    let id = data.id; 
+    let balance = data.balance;   
+    let account : string;
+    let off = 0;
+
+    return sequelize.transaction((t : any) => {
+        return models['User'].findById(id)
+        .then((u : any) => {
+            if (!u)
+                return Promise.reject('user not exist');
+
+            account = u.account;
+            off = balance - u.balance;
+
+            let up : any = {
+                balance : balance,
+                is_agent : data.is_agent,
+                wechat : data.wechat,
+            };
+
+            if (data.password != u.password)
+                up['password'] = md5(data.password);
+
+            if (off > 0)
+                up['total_recharge'] = sequelize.literal('total_recharge + ' + off);
+            else if (off < 0)
+                up['total_withdraw'] = sequelize.literal('total_withdraw + ' + (0 - off));
+
+            return u.update(up, { transaction : t });
+        })
+        .then(() => {
+            if (off == 0)
+                return true;
+
+            return models['UserLog'].create({
+                type : 'transfer',
+                account : '100001',
+                target : account,
+                amount : off
+            }, { transaction : t });
+        });
     });
 }
 
@@ -76,6 +143,7 @@ function list_game_records(uid : number) {
                 bet : x.bet,
                 amount : x.amount,
                 result : x.result,
+                desc : x.desc,
                 created_at : x.created_at,
                 room_id : x.game ? x.game.room_id : 0,
                 round : x.game ? x.game.round : 0,
@@ -113,12 +181,27 @@ export function set_param(param : SetParamParam) {
     
 }
 
+export function next_result(data : any) {
+    const KEY = 'next_result';
+
+    return redis.set(KEY, data.result)
+    .then(() => {
+        return { errcode : 0 };
+    })
+    .catch(err => {
+        console.log('set err: ' + err);
+    });
+}
+
 const exp : any = {
 	'login' : login,
     'logout' : logout,
+    'passwd' : passwd,
     'list_all_user' : list_all_user,
+    'list_all_room' : list_all_room,
     'update_user_info' : update_user_info,
-    'query_records' : query_records
+    'query_records' : query_records,
+    'next_result' : next_result
 };
 
 export default exp;

@@ -32,6 +32,37 @@
                 alert('online failed');
         });
 */
+        $("#btn_set").on("click",function(){
+            var result = $("input[name='next_result']:checked").val();
+            api_request("next_result", { result : result }, function(ret) {
+                if (ret.errcode != 0)
+                    alert('set failed');
+            });
+        });
+
+        $("#btn_passwd").on("click",function() {
+            var passwd1 = $.trim( $("#passwd1").val() );
+            var passwd2 = $.trim( $("#passwd2").val() );
+
+            if (passwd1 != passwd2) {
+                alert('二次输入密码不一致');
+                return;
+            }
+
+            if (passwd1.length == 0) {
+                alert('密码不能为空');
+                return;
+            }
+
+            api_request("passwd", { password : passwd1 }, function(ret) {
+                if (ret.errcode == 0) {
+                    alert('设置成功');
+                    $("#passwd1").val('');
+                    $("#passwd2").val('');
+                } else
+                    alert('设置失败');
+            });
+        });
     });
 
     </script>
@@ -52,6 +83,7 @@
                 <ul class="nav navbar-nav side-nav">
                     <li class="active"><a href="main.html"><i class="fa fa-bullseye"></i> 首 页</a></li>
                     <li><a href="userconfig.html"><i class="fa fa-table"></i>玩家管理</a></li>
+                    <li><a href="room.html"><i class="fa fa-table"></i>房间管理</a></li>
                     <li><a href="record.html"><i class="fa fa-table"></i>游戏记录查询</a></li>
                 </ul>
             </div>
@@ -67,6 +99,17 @@
                         <br/>
                         <br/><br/>
                         <div id="online"></div>
+
+                        下局结果设置<br/>
+                        <input name="next_result" type="radio" value="B", checked="checked">大</input>
+                        <input name="next_result" type="radio" value="S">小</input>
+                        <input name="next_result" type="radio" value="L">豹</input>
+                        <br/><br/>
+                        <button id="btn_set">设置</button>
+                        <br/><br/></br>
+                        新密码: <input type='password' id="passwd1" /><br/>
+                        密码确认: <input type='password' id="passwd2" /><br/>
+                        <button id="btn_passwd">更新密码</button>
                     </div>
                 </div>
             </div>

@@ -5,13 +5,14 @@ const Game = sequelize.models['Game'];
 const GameLog = sequelize.models['GameLog'];
 const Promise = sequelize.Promise;
 
-export function createGameLog(uid : number, gid : number, bet : string, amount : number, result : number) {
+export function createGameLog(uid : number, gid : number, bet : string, amount : number, result : number, desc : string) {
     return GameLog.create({
         user_id : uid,
         game_id : gid,
         bet : bet,
         amount : amount,
-        result : result
+        result : result,
+        desc : desc
     });
 }
 

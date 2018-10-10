@@ -6,6 +6,7 @@ import session_config from '../../config/session'
 
 const userDao = dao['UserDao'];
 const sequelize = dao.sequelize;
+const Promise = sequelize.Promise;
 
 interface LoginParams {
     account: string;
@@ -15,27 +16,33 @@ interface LoginParams {
 
 export function login(params : LoginParams) {
 	let account = params.account;
+    let token : any = null;
+    let user : any = null;
 
 	return userDao.getByAccount(account)
     .then((u : any) => {
         if (!u)
-            return { code: 404,  msg: 'not found' };
+            return Promise.reject({ code: 404,  msg: '账号不存在' });
 
 		let sign = md5(u.password + params.noice);
         if (sign != params.sign)
-            return { code: 401,  msg: 'err password' };
+            return Promise.reject({ code: 401,  msg: '密码错误' });
 
-		let token = Token.create(u.id, Date.now(), session_config.secret);
+		token = Token.create(u.id, Date.now(), session_config.secret);
+        user = u;
 
+        return userDao.login(u.id);
+    })
+    .then(() => {
         return {
 			code: 0,
 			data: {
-            	id: u.id,
+            	id: user.id,
             	token: token,
 				account : account,
-            	nickname: u.nickname,
-				avatar : u.avatar,
-            	balance: u.balance 
+            	nickname: user.nickname,
+				avatar : user.avatar,
+            	balance: user.balance 
         	}
 		};
     });
@@ -95,7 +102,7 @@ export function random() {
 			code : 0,
 			data : {
 				account : account,
-				nickname : '茅十八'
+				nickname : ''
 			}
 		};
 	})
@@ -104,10 +111,27 @@ export function random() {
 	});
 }
 
+interface SetupParam {
+    uid : number;
+    nickname : string;
+    avatar : number;
+}
+
+export function setup(param : SetupParam) {
+    return userDao.setup(param.uid, param.nickname, param.avatar)
+	.then(() => {
+		return { code : 0 };
+	})
+	.catch ((err : any) => {
+		return { code : 500, msg : err };
+	});
+}
+
 const exp : any = {
 	'register' : register,
 	'login' : login,
-	'random' : random
+	'random' : random,
+    'setup' : setup
 };
 
 export default exp;

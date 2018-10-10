@@ -120,9 +120,10 @@ function userLeave(ws : any) {
 	delete g_players[uid];
 
 	let room = g_rooms[player.room_id];
-
 	if (room)
 		mroom.leaveRoom(room, player);
+
+    return userDao.logout(uid);
 }
 
 wss.on('connection', (ws: WebSocket) => {

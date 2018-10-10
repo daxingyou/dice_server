@@ -9,7 +9,7 @@ export function sendMsg(player : any, type : string, data : any) {
 		data : data
 	};
 
-	console.log('sendMsg: ' + JSON.stringify(ret));
+	//console.log('sendMsg: ' + JSON.stringify(ret));
 
 	player.ws.send(JSON.stringify(ret));
 }
@@ -22,7 +22,7 @@ export function broadcast(room : any, type : string, data : any) {
 
 	let msg = JSON.stringify(ret);
 
-	console.log('broadcast: ' + msg);
+	//console.log('broadcast: ' + msg);
 
 	room.players.forEach((x : any) => {
 		x.ws.send(msg);
